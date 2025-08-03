@@ -1,0 +1,25 @@
+# Security audit configuration for cargo-audit
+
+[advisories]
+# Ignore advisories that cannot be fixed due to Solana ecosystem constraints
+ignore = [
+    # CRITICAL ASSESSMENT: curve25519-dalek timing attack
+    # Risk: Timing side-channel attack on scalar operations
+    # Mitigation: Requires local access + specific conditions
+    # Status: Cannot upgrade due to Solana dependency constraints
+    # Decision: Accept risk for development (MUST FIX for production)
+    "RUSTSEC-2024-0344",
+    
+    # LOW RISK: Unmaintained crates (warnings only)
+    "RUSTSEC-2024-0388",  # derivative - unmaintained but stable
+    "RUSTSEC-2024-0436",  # paste - unmaintained but stable
+    "RUSTSEC-2023-0033"   # borsh - ZST parsing issue (low impact)
+]
+
+[database]
+fetch = true
+stale = false
+
+[output]
+format = "json"
+quiet = false
