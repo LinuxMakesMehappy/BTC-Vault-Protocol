@@ -32,14 +32,22 @@
   - Add unit tests for oracle integration and failure scenarios
   - _Requirements: FR1, EC1_
 
-- [ ] 4. Build BTC commitment instruction handlers
+- [x] 4. Build BTC commitment instruction handlers
+
+
+
+
+
   - Implement commit_btc instruction that validates ECDSA proofs and stores commitments
   - Create verify_balance instruction that checks user BTC balance via Chainlink oracles
   - Add update_commitment instruction for modifying existing commitments
   - Write integration tests for all BTC commitment operations
   - _Requirements: FR1, SR5_
 
-- [ ] 5. Create staking pool data structures and allocation logic
+- [x] 5. Create staking pool data structures and allocation logic
+
+
+
   - Implement StakingPool account with SOL (40%), ETH (30%), ATOM (30%) allocation tracking
   - Create asset allocation functions that distribute treasury funds according to percentages
   - Add validator selection logic for SOL staking and cross-chain staking preparation

@@ -257,7 +257,8 @@ class ChainlinkConfig:
             data = json.load(f)
         
         # Reconstruct the configuration
-        network = Network(data['network'])
+        network_str = str(data['network']).split('.')[-1].lower()  # Extract enum value
+        network = Network(network_str)
         config = cls(network)
         
         # Override with loaded data

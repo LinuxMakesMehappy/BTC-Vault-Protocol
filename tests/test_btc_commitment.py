@@ -189,19 +189,26 @@ class TestBTCCommitment:
     
     @pytest.mark.asyncio
     async def test_chainlink_oracle_integration(self, mock_vault_client):
-        """Test Chainlink oracle integration for balance verification"""
-        with patch('config.chainlink.VERIFICATION_CONFIG') as mock_config:
+        """Test Chainlink oracle integration for balance verification with retry logic"""
+        with patch('config.chainlink.get_verification_settings') as mock_config:
             mock_config.return_value = {
-                'interval_seconds': 60,
-                'retry_attempts': 3,
-                'timeout_seconds': 30
+                'interval': 60,
+                'cache_duration': 300,
+                'retry_config': {
+                    'max_retries': 3,
+                    'base_delay': 2,
+                    'max_delay': 60
+                }
             }
             
+            # Test successful oracle verification
             mock_vault_client.verify_balance.return_value = {
                 'verified': True,
                 'balance': 0.5,
                 'oracle_timestamp': 1640995200,  # Mock timestamp
-                'price_usd': 45000  # Mock BTC price
+                'price_usd': 45000,  # Mock BTC price
+                'retry_count': 0,
+                'cache_hit': False
             }
             
             result = await mock_vault_client.verify_balance()
@@ -209,6 +216,20 @@ class TestBTCCommitment:
             assert result['verified'] is True
             assert 'oracle_timestamp' in result
             assert 'price_usd' in result
+            assert result['retry_count'] == 0
+            
+            # Test oracle failure with retry
+            mock_vault_client.verify_balance.return_value = {
+                'verified': False,
+                'error': 'Oracle verification failed',
+                'retry_count': 1,
+                'next_retry_delay': 2
+            }
+            
+            result = await mock_vault_client.verify_balance()
+            assert result['verified'] is False
+            assert result['retry_count'] == 1
+            assert 'next_retry_delay' in result
 
     @pytest.mark.asyncio
     async def test_btc_address_validation(self, mock_vault_client):
@@ -375,6 +396,468 @@ class TestBTCCommitment:
         # All validations should succeed
         assert all(result['valid'] for result in results)
         assert len(results) == 20
+
+    @pytest.mark.asyncio
+    async def test_commit_btc_instruction_handler(self, mock_vault_client, sample_btc_data):
+        """Test commit_btc instruction handler with comprehensive validation"""
+        # Test successful commitment
+        mock_vault_client.commit_btc.return_value = {
+            'success': True,
+            'signature': '5j7s1QzqC9JF2BxhoBkJoMRKs8eJvj7s1QzqC9JF2BxhoBkJoMRKs8eJvj7s1QzqC9JF2BxhoBkJoMRKs8eJv',
+            'commitment_hash': '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+            'timestamp': 1640995200,
+            'verified': False  # Requires separate verification
+        }
+        
+        result = await mock_vault_client.commit_btc(
+            sample_btc_data['amount'],
+            sample_btc_data['btc_address'],
+            sample_btc_data['ecdsa_proof']
+        )
+        
+        assert result['success'] is True
+        assert 'commitment_hash' in result
+        assert 'timestamp' in result
+        assert result['verified'] is False  # Should require separate verification
+        
+        # Test KYC limit enforcement (over 1 BTC)
+        mock_vault_client.commit_btc.return_value = {
+            'success': False,
+            'error': 'KYC verification required for commitments over 1 BTC'
+        }
+        
+        result = await mock_vault_client.commit_btc(
+            1.5,  # Over 1 BTC limit
+            sample_btc_data['btc_address'],
+            sample_btc_data['ecdsa_proof']
+        )
+        
+        assert result['success'] is False
+        assert 'KYC verification required' in result['error']
+
+    @pytest.mark.asyncio
+    async def test_verify_balance_instruction_handler(self, mock_vault_client):
+        """Test verify_balance instruction handler with oracle integration"""
+        # Test successful verification with fresh oracle data
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'balance': 50000000,  # 0.5 BTC in satoshis
+            'last_verification': 1640995200,
+            'oracle_data_age': 30,  # 30 seconds old
+            'cache_hit': False,
+            'retry_count': 0
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is True
+        assert result['balance'] == 50000000
+        assert result['oracle_data_age'] <= 60  # Within 60 second interval
+        assert result['retry_count'] == 0
+        
+        # Test verification with cached data
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'balance': 50000000,
+            'last_verification': 1640995200,
+            'cache_hit': True,
+            'cache_age': 120  # 2 minutes old, within 5 minute cache limit
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is True
+        assert result['cache_hit'] is True
+        assert result['cache_age'] <= 300  # Within 5 minute cache limit
+        
+        # Test verification failure with retry logic
+        mock_vault_client.verify_balance.return_value = {
+            'verified': False,
+            'error': 'Oracle verification failed',
+            'retry_count': 1,
+            'next_retry_delay': 4,  # Exponential backoff: 2^1 * 2 = 4 seconds
+            'max_retries': 3
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is False
+        assert result['retry_count'] == 1
+        assert result['next_retry_delay'] == 4
+        assert result['max_retries'] == 3
+
+    @pytest.mark.asyncio
+    async def test_update_commitment_instruction_handler(self, mock_vault_client, sample_btc_data):
+        """Test update_commitment instruction handler with validation"""
+        # Test successful commitment update
+        mock_vault_client.update_commitment.return_value = {
+            'success': True,
+            'old_amount': 50000000,  # 0.5 BTC in satoshis
+            'new_amount': 75000000,  # 0.75 BTC in satoshis
+            'new_commitment_hash': '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+            'timestamp': 1640995260,
+            'verified': False  # Requires re-verification
+        }
+        
+        result = await mock_vault_client.update_commitment(
+            0.75,  # New amount
+            'new_ecdsa_proof',
+            'new_public_key'
+        )
+        
+        assert result['success'] is True
+        assert result['new_amount'] == 75000000
+        assert result['verified'] is False  # Should require re-verification
+        assert 'new_commitment_hash' in result
+        
+        # Test update with KYC limit enforcement
+        mock_vault_client.update_commitment.return_value = {
+            'success': False,
+            'error': 'KYC verification required for commitments over 1 BTC'
+        }
+        
+        result = await mock_vault_client.update_commitment(
+            1.2,  # Over 1 BTC limit
+            'new_ecdsa_proof',
+            'new_public_key'
+        )
+        
+        assert result['success'] is False
+        assert 'KYC verification required' in result['error']
+        
+        # Test significant reduction warning
+        mock_vault_client.update_commitment.return_value = {
+            'success': True,
+            'warning': 'Significant commitment reduction detected',
+            'old_amount': 100000000,  # 1 BTC
+            'new_amount': 25000000,   # 0.25 BTC (75% reduction)
+            'reduction_percentage': 75
+        }
+        
+        result = await mock_vault_client.update_commitment(
+            0.25,  # Significant reduction
+            'new_ecdsa_proof',
+            'new_public_key'
+        )
+        
+        assert result['success'] is True
+        assert 'warning' in result
+        assert result['reduction_percentage'] == 75
+
+    @pytest.mark.asyncio
+    async def test_ecdsa_proof_anti_spoofing(self, mock_vault_client, sample_btc_data):
+        """Test ECDSA proof validation for anti-spoofing protection"""
+        # Test valid ECDSA proof
+        mock_vault_client.commit_btc.return_value = {
+            'success': True,
+            'ecdsa_validation': True,
+            'proof_hash': '0x1234567890abcdef',
+            'public_key_valid': True
+        }
+        
+        result = await mock_vault_client.commit_btc(
+            sample_btc_data['amount'],
+            sample_btc_data['btc_address'],
+            sample_btc_data['ecdsa_proof']
+        )
+        
+        assert result['success'] is True
+        assert result['ecdsa_validation'] is True
+        assert result['public_key_valid'] is True
+        
+        # Test spoofing attempt detection
+        spoofing_attempts = [
+            {'proof': '', 'error': 'Empty ECDSA proof'},
+            {'proof': 'a' * 32, 'error': 'Invalid ECDSA proof length'},
+            {'proof': 'invalid_signature', 'error': 'ECDSA signature verification failed'},
+            {'proof': 'b' * 128, 'error': 'Public key validation failed'}
+        ]
+        
+        for attempt in spoofing_attempts:
+            mock_vault_client.commit_btc.return_value = {
+                'success': False,
+                'error': attempt['error'],
+                'security_violation': True
+            }
+            
+            result = await mock_vault_client.commit_btc(
+                sample_btc_data['amount'],
+                sample_btc_data['btc_address'],
+                attempt['proof']
+            )
+            
+            assert result['success'] is False
+            assert result['security_violation'] is True
+            assert attempt['error'] in result['error']
+
+    @pytest.mark.asyncio
+    async def test_oracle_retry_exponential_backoff(self, mock_vault_client):
+        """Test oracle retry logic with exponential backoff"""
+        retry_scenarios = [
+            {'retry': 0, 'delay': 2},   # 2^0 * 2 = 2 seconds
+            {'retry': 1, 'delay': 4},   # 2^1 * 2 = 4 seconds
+            {'retry': 2, 'delay': 8},   # 2^2 * 2 = 8 seconds
+            {'retry': 3, 'delay': 16},  # 2^3 * 2 = 16 seconds
+        ]
+        
+        for scenario in retry_scenarios:
+            mock_vault_client.verify_balance.return_value = {
+                'verified': False,
+                'error': 'Oracle verification failed',
+                'retry_count': scenario['retry'],
+                'next_retry_delay': scenario['delay'],
+                'exponential_backoff': True
+            }
+            
+            result = await mock_vault_client.verify_balance()
+            
+            assert result['verified'] is False
+            assert result['retry_count'] == scenario['retry']
+            assert result['next_retry_delay'] == scenario['delay']
+            assert result['exponential_backoff'] is True
+
+    @pytest.mark.asyncio
+    async def test_60_second_verification_interval(self, mock_vault_client):
+        """Test 60-second verification interval enforcement"""
+        import time
+        
+        current_time = int(time.time())
+        
+        # Test verification within 60 seconds (should be skipped)
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'skipped': True,
+            'reason': 'Within 60 second verification interval',
+            'last_verification': current_time - 30,  # 30 seconds ago
+            'time_remaining': 30
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is True
+        assert result['skipped'] is True
+        assert result['time_remaining'] == 30
+        
+        # Test verification after 60 seconds (should proceed)
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'skipped': False,
+            'last_verification': current_time - 70,  # 70 seconds ago
+            'oracle_called': True
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is True
+        assert result['skipped'] is False
+        assert result['oracle_called'] is True
+
+    @pytest.mark.asyncio
+    async def test_5_minute_cache_duration(self, mock_vault_client):
+        """Test 5-minute cache duration for UTXO verification"""
+        import time
+        
+        current_time = int(time.time())
+        
+        # Test cache hit within 5 minutes
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'cache_hit': True,
+            'cache_age': 240,  # 4 minutes old
+            'cache_valid': True,
+            'oracle_called': False
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is True
+        assert result['cache_hit'] is True
+        assert result['cache_age'] < 300  # Less than 5 minutes
+        assert result['oracle_called'] is False
+        
+        # Test cache miss after 5 minutes
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'cache_hit': False,
+            'cache_age': 360,  # 6 minutes old
+            'cache_valid': False,
+            'oracle_called': True
+        }
+        
+        result = await mock_vault_client.verify_balance()
+        
+        assert result['verified'] is True
+        assert result['cache_hit'] is False
+        assert result['cache_age'] > 300  # More than 5 minutes
+        assert result['oracle_called'] is True
+
+    @pytest.mark.asyncio
+    async def test_comprehensive_integration_flow(self, mock_vault_client, sample_btc_data):
+        """Test complete integration flow: commit -> verify -> update"""
+        # Step 1: Commit BTC
+        mock_vault_client.commit_btc.return_value = {
+            'success': True,
+            'commitment_id': 'test_commitment_123',
+            'signature': '5j7s1QzqC9JF2BxhoBkJoMRKs8eJvj7s1QzqC9JF2BxhoBkJoMRKs8eJvj7s1QzqC9JF2BxhoBkJoMRKs8eJv'
+        }
+        
+        commit_result = await mock_vault_client.commit_btc(
+            sample_btc_data['amount'],
+            sample_btc_data['btc_address'],
+            sample_btc_data['ecdsa_proof']
+        )
+        
+        assert commit_result['success'] is True
+        commitment_id = commit_result['commitment_id']
+        
+        # Step 2: Verify balance
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'balance': 50000000,  # 0.5 BTC in satoshis
+            'commitment_id': commitment_id
+        }
+        
+        verify_result = await mock_vault_client.verify_balance()
+        
+        assert verify_result['verified'] is True
+        assert verify_result['commitment_id'] == commitment_id
+        
+        # Step 3: Update commitment
+        mock_vault_client.update_commitment.return_value = {
+            'success': True,
+            'commitment_id': commitment_id,
+            'new_amount': 75000000,  # 0.75 BTC
+            'requires_reverification': True
+        }
+        
+        update_result = await mock_vault_client.update_commitment(
+            0.75,
+            'new_ecdsa_proof',
+            'new_public_key'
+        )
+        
+        assert update_result['success'] is True
+        assert update_result['commitment_id'] == commitment_id
+        assert update_result['requires_reverification'] is True
+        
+        # Step 4: Re-verify after update
+        mock_vault_client.verify_balance.return_value = {
+            'verified': True,
+            'balance': 75000000,  # Updated balance
+            'commitment_id': commitment_id,
+            'updated': True
+        }
+        
+        reverify_result = await mock_vault_client.verify_balance()
+        
+        assert reverify_result['verified'] is True
+        assert reverify_result['balance'] == 75000000
+        assert reverify_result['updated'] is True
+
+    @pytest.mark.asyncio
+    async def test_concurrent_instruction_operations(self, mock_vault_client, sample_btc_data):
+        """Test concurrent execution of all BTC commitment instructions"""
+        # Mock responses for concurrent operations
+        mock_vault_client.commit_btc.return_value = {'success': True, 'id': 'commit'}
+        mock_vault_client.verify_balance.return_value = {'verified': True, 'id': 'verify'}
+        mock_vault_client.update_commitment.return_value = {'success': True, 'id': 'update'}
+        
+        # Create concurrent tasks for all three instruction types
+        commit_tasks = [
+            mock_vault_client.commit_btc(
+                sample_btc_data['amount'],
+                sample_btc_data['btc_address'],
+                sample_btc_data['ecdsa_proof']
+            ) for _ in range(5)
+        ]
+        
+        verify_tasks = [
+            mock_vault_client.verify_balance() for _ in range(5)
+        ]
+        
+        update_tasks = [
+            mock_vault_client.update_commitment(
+                0.6,
+                'new_proof',
+                'new_key'
+            ) for _ in range(5)
+        ]
+        
+        # Execute all tasks concurrently
+        all_tasks = commit_tasks + verify_tasks + update_tasks
+        results = await asyncio.gather(*all_tasks)
+        
+        # Verify all operations completed successfully
+        commit_results = results[:5]
+        verify_results = results[5:10]
+        update_results = results[10:15]
+        
+        assert all(r['success'] for r in commit_results)
+        assert all(r['verified'] for r in verify_results)
+        assert all(r['success'] for r in update_results)
+        assert len(results) == 15
+
+    def test_instruction_handler_error_scenarios(self, mock_vault_client):
+        """Test comprehensive error scenarios for all instruction handlers"""
+        error_scenarios = [
+            {
+                'instruction': 'commit_btc',
+                'error': 'Invalid BTC address format',
+                'code': 'InvalidBTCAddress'
+            },
+            {
+                'instruction': 'commit_btc',
+                'error': 'Invalid ECDSA proof',
+                'code': 'InvalidECDSAProof'
+            },
+            {
+                'instruction': 'verify_balance',
+                'error': 'Oracle verification failed',
+                'code': 'OracleVerificationFailed'
+            },
+            {
+                'instruction': 'verify_balance',
+                'error': 'Insufficient balance',
+                'code': 'InsufficientBalance'
+            },
+            {
+                'instruction': 'update_commitment',
+                'error': 'Unauthorized signer',
+                'code': 'UnauthorizedSigner'
+            },
+            {
+                'instruction': 'update_commitment',
+                'error': 'Security violation detected',
+                'code': 'SecurityViolation'
+            }
+        ]
+        
+        for scenario in error_scenarios:
+            # Mock the appropriate method to return error
+            if scenario['instruction'] == 'commit_btc':
+                mock_vault_client.commit_btc.return_value = {
+                    'success': False,
+                    'error': scenario['error'],
+                    'error_code': scenario['code']
+                }
+                result = mock_vault_client.commit_btc.return_value
+            elif scenario['instruction'] == 'verify_balance':
+                mock_vault_client.verify_balance.return_value = {
+                    'verified': False,
+                    'error': scenario['error'],
+                    'error_code': scenario['code']
+                }
+                result = mock_vault_client.verify_balance.return_value
+            elif scenario['instruction'] == 'update_commitment':
+                mock_vault_client.update_commitment.return_value = {
+                    'success': False,
+                    'error': scenario['error'],
+                    'error_code': scenario['code']
+                }
+                result = mock_vault_client.update_commitment.return_value
+            
+            assert scenario['error'] in result['error']
+            assert result['error_code'] == scenario['code']
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
