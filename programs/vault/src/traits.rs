@@ -37,7 +37,7 @@ pub trait KYCInterface {
     fn update_limits(user: Pubkey, new_limit: u64) -> Result<()>;
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum PaymentType {
     BTC,
     USDC,

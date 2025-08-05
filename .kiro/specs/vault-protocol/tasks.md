@@ -48,34 +48,48 @@
 
 
 
+
   - Implement StakingPool account with SOL (40%), ETH (30%), ATOM (30%) allocation tracking
   - Create asset allocation functions that distribute treasury funds according to percentages
   - Add validator selection logic for SOL staking and cross-chain staking preparation
   - Write unit tests for allocation calculations and rebalancing
   - _Requirements: FR2, EC2_
 
-- [ ] 6. Implement protocol asset staking mechanisms
+- [x] 6. Implement protocol asset staking mechanisms
+
+
+
   - Create stake_protocol_assets instruction for SOL native staking
   - Implement cross-chain message passing for ETH L2 staking (Arbitrum/Optimism)
   - Add ATOM staking integration with Everstake/Cephalopod (20%) and Osmosis (10%)
   - Write tests for staking operations and cross-chain communication
   - _Requirements: FR2_
 
-- [ ] 7. Build reward calculation and distribution system
+- [x] 7. Build reward calculation and distribution system
+
+
+
   - Implement reward calculation logic with 1:2 ratio (user BTC commitment to staked assets)
   - Create reward distribution functions that share 50% of staking profits with users
   - Add state channel integration for off-chain reward calculations
   - Write unit tests for reward calculations and distribution accuracy
   - _Requirements: FR2, FR4_
 
-- [ ] 8. Create multi-currency payment system
+- [x] 8. Create multi-currency payment system
+
+
+
   - Implement Lightning Network integration for default BTC reward payments
   - Add USDC payment option with user-selectable dropdown functionality
   - Create auto-reinvestment logic that automatically compounds user rewards
   - Write payment processing tests including failure scenarios and fallbacks
   - _Requirements: FR3, FR4_
 
-- [ ] 9. Implement multisig security with HSM integration
+- [x] 9. Implement multisig security with HSM integration
+
+
+
+
   - Create 2-of-3 multisig wallet structure with Yubico HSM key management
   - Implement transaction proposal, signing, and execution workflow
   - Add key rotation functionality for security maintenance

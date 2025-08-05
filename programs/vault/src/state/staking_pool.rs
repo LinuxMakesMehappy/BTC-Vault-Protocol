@@ -327,6 +327,78 @@ impl StakingPool {
         
         Ok(())
     }
+
+    /// Update validator stake amount
+    pub fn update_validator_stake(&mut self, validator_address: &str, amount: u64) -> Result<()> {
+        // Update SOL validator stake
+        for validator in &mut self.sol_validators {
+            if validator.address == validator_address {
+                validator.stake_amount = validator.stake_amount.checked_add(amount).unwrap();
+                return Ok(());
+            }
+        }
+        
+        // Update ETH validator stake
+        for validator in &mut self.eth_validators {
+            if validator.address == validator_address {
+                validator.stake_amount = validator.stake_amount.checked_add(amount).unwrap();
+                return Ok(());
+            }
+        }
+        
+        Err(VaultError::NoValidatorsAvailable.into())
+    }
+
+    /// Get total staked amount across all validators
+    pub fn get_total_validator_stakes(&self) -> u64 {
+        let sol_total: u64 = self.sol_validators.iter().map(|v| v.stake_amount).sum();
+        let eth_total: u64 = self.eth_validators.iter().map(|v| v.stake_amount).sum();
+        sol_total + eth_total
+    }
+
+    /// Deactivate underperforming validators
+    pub fn deactivate_validator(&mut self, validator_address: &str) -> Result<()> {
+        // Deactivate SOL validator
+        for validator in &mut self.sol_validators {
+            if validator.address == validator_address {
+                validator.is_active = false;
+                msg!("Deactivated SOL validator: {}", validator_address);
+                return Ok(());
+            }
+        }
+        
+        // Deactivate ETH validator
+        for validator in &mut self.eth_validators {
+            if validator.address == validator_address {
+                validator.is_active = false;
+                msg!("Deactivated ETH validator: {}", validator_address);
+                return Ok(());
+            }
+        }
+        
+        Err(VaultError::NoValidatorsAvailable.into())
+    }
+
+    /// Update validator performance score
+    pub fn update_validator_performance(&mut self, validator_address: &str, new_score: u16) -> Result<()> {
+        // Update SOL validator performance
+        for validator in &mut self.sol_validators {
+            if validator.address == validator_address {
+                validator.performance_score = new_score;
+                return Ok(());
+            }
+        }
+        
+        // Update ETH validator performance
+        for validator in &mut self.eth_validators {
+            if validator.address == validator_address {
+                validator.performance_score = new_score;
+                return Ok(());
+            }
+        }
+        
+        Err(VaultError::NoValidatorsAvailable.into())
+    }
 }
 
 
