@@ -5,6 +5,8 @@ pub mod rewards;
 pub mod state_channel;
 pub mod multisig_wallet;
 pub mod payment_system;
+pub mod kyc_compliance;
+pub mod authentication;
 pub mod treasury;
 
 pub use btc_commitment::*;
@@ -14,4 +16,6 @@ pub use rewards::*;
 pub use state_channel::*;
 pub use multisig_wallet::*;
 pub use payment_system::*;
+pub use kyc_compliance::*;
+pub use authentication::*;
 pub use treasury::*;

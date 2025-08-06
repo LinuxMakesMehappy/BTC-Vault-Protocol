@@ -1,128 +1,183 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Bitcoin, TrendingUp, Shield, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { StatsCard } from '@/components/StatsCard';
+import { FeatureCard } from '@/components/FeatureCard';
 
 export default function Home() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { connected } = useWallet();
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+  const features = [
+    {
+      icon: Shield,
+      title: 'Non-Custodial',
+      description: 'Keep full control of your Bitcoin while earning staking rewards through ECDSA proof verification.',
+      color: 'text-blue-400',
+    },
+    {
+      icon: TrendingUp,
+      title: 'Multi-Chain Staking',
+      description: 'Protocol stakes across SOL (40%), ETH (30%), and ATOM (30%) to generate rewards.',
+      color: 'text-green-400',
+    },
+    {
+      icon: Zap,
+      title: 'Enterprise Security',
+      description: '2-of-3 multisig with Yubico HSMs, optional KYC, and 2FA authentication.',
+      color: 'text-vault-accent',
+    },
+  ];
+
+  const stats = [
+    {
+      label: t('dashboard.btcCommitted'),
+      value: '0.00 BTC',
+      change: '+0%',
+      trend: 'neutral' as const,
+    },
+    {
+      label: t('dashboard.rewardsEarned'),
+      value: '$0.00',
+      change: '+0%',
+      trend: 'neutral' as const,
+    },
+    {
+      label: t('dashboard.treasuryAssets'),
+      value: '$0.00',
+      change: '+0%',
+      trend: 'neutral' as const,
+    },
+    {
+      label: t('dashboard.totalRewards'),
+      value: '$0.00',
+      change: '+0%',
+      trend: 'neutral' as const,
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-vault-primary to-vault-secondary text-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-3xl font-bold text-vault-accent">
-            {t('dashboard.title')}
-          </h1>
-          
-          <div className="flex items-center gap-4">
-            {/* Language Selector */}
-            <select 
-              onChange={(e) => changeLanguage(e.target.value)}
-              className="bg-vault-secondary border border-gray-600 rounded px-3 py-1 text-sm"
-              defaultValue={i18n.language}
+    <div className="container mx-auto px-4 py-8">
+      {/* Hero Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center mb-16"
+      >
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-vault-accent to-orange-400 rounded-2xl flex items-center justify-center">
+            <Bitcoin className="w-8 h-8 text-white" />
+          </div>
+        </div>
+
+        <h1 className="text-5xl md:text-6xl font-bold mb-6">
+          <span className="text-gradient">Vault Protocol</span>
+        </h1>
+
+        <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
+          A security-focused, non-custodial Bitcoin protocol that allows users to commit BTC
+          without transferring custody while earning rewards from protocol-owned staking activities.
+        </p>
+
+        {!connected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-vault-accent/10 border border-vault-accent/20 rounded-lg p-4 max-w-md mx-auto mb-8"
+          >
+            <p className="text-vault-accent text-sm font-medium">
+              Connect your wallet to get started with Bitcoin staking
+            </p>
+          </motion.div>
+        )}
+      </motion.section>
+
+      {/* Stats Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+      >
+        {stats.map((stat, index) => (
+          <StatsCard key={stat.label} {...stat} delay={index * 0.1} />
+        ))}
+      </motion.section>
+
+      {/* Features Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="mb-16"
+      >
+        <h2 className="text-3xl font-bold text-center mb-12">
+          Why Choose Vault Protocol?
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <FeatureCard key={feature.title} {...feature} delay={index * 0.1} />
+          ))}
+        </div>
+      </motion.section>
+
+      {/* Action Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+        className="text-center"
+      >
+        <h2 className="text-2xl font-bold mb-8">
+          Ready to start earning rewards on your Bitcoin?
+        </h2>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-2xl mx-auto">
+          <Link href="/btc" className="btn-primary flex items-center justify-center space-x-2">
+            <Bitcoin className="w-5 h-5" />
+            <span>{t('btc.commitTitle')}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          <Link href="/rewards" className="btn-success flex items-center justify-center space-x-2">
+            <TrendingUp className="w-5 h-5" />
+            <span>{t('rewards.claim')}</span>
+          </Link>
+
+          <Link href="/kyc" className="btn-secondary flex items-center justify-center space-x-2">
+            <Shield className="w-5 h-5" />
+            <span>{t('kyc.title')}</span>
+          </Link>
+        </div>
+
+        <div className="mt-8 text-sm text-gray-400">
+          <p>
+            Learn more about our{' '}
+            <a
+              href="#"
+              className="text-vault-accent hover:text-orange-400 inline-flex items-center space-x-1"
             >
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="zh">中文</option>
-              <option value="ja">日本語</option>
-            </select>
-            
-            {/* Wallet Connection */}
-            <WalletMultiButton />
-          </div>
-        </header>
-
-        {/* Welcome Section */}
-        <section className="text-center mb-16">
-          <h2 className="text-5xl font-bold mb-6">
-            Vault Protocol
-          </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-            A security-focused, non-custodial Bitcoin protocol that allows users to commit BTC 
-            without transferring custody while earning rewards from protocol-owned staking activities.
+              <span>security practices</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            {' '}and{' '}
+            <a
+              href="#"
+              className="text-vault-accent hover:text-orange-400 inline-flex items-center space-x-1"
+            >
+              <span>audit reports</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-            <div className="bg-vault-secondary/50 p-6 rounded-lg border border-gray-700">
-              <h3 className="text-xl font-semibold mb-3 text-vault-accent">
-                Non-Custodial
-              </h3>
-              <p className="text-gray-300">
-                Keep full control of your Bitcoin while earning staking rewards through ECDSA proof verification.
-              </p>
-            </div>
-            
-            <div className="bg-vault-secondary/50 p-6 rounded-lg border border-gray-700">
-              <h3 className="text-xl font-semibold mb-3 text-vault-accent">
-                Multi-Chain Staking
-              </h3>
-              <p className="text-gray-300">
-                Protocol stakes across SOL (40%), ETH (30%), and ATOM (30%) to generate rewards.
-              </p>
-            </div>
-            
-            <div className="bg-vault-secondary/50 p-6 rounded-lg border border-gray-700">
-              <h3 className="text-xl font-semibold mb-3 text-vault-accent">
-                Enterprise Security
-              </h3>
-              <p className="text-gray-300">
-                2-of-3 multisig with Yubico HSMs, optional KYC, and 2FA authentication.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Stats Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-vault-secondary/30 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">
-              {t('dashboard.btcCommitted')}
-            </h3>
-            <p className="text-2xl font-bold text-vault-accent">0.00 BTC</p>
-          </div>
-          
-          <div className="bg-vault-secondary/30 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">
-              {t('dashboard.rewardsEarned')}
-            </h3>
-            <p className="text-2xl font-bold text-vault-success">$0.00</p>
-          </div>
-          
-          <div className="bg-vault-secondary/30 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">
-              {t('dashboard.treasuryAssets')}
-            </h3>
-            <p className="text-2xl font-bold">$0.00</p>
-          </div>
-          
-          <div className="bg-vault-secondary/30 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">
-              {t('dashboard.totalRewards')}
-            </h3>
-            <p className="text-2xl font-bold">$0.00</p>
-          </div>
-        </section>
-
-        {/* Action Buttons */}
-        <section className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="bg-vault-accent hover:bg-orange-600 text-white font-medium py-3 px-8 rounded-lg transition-colors">
-            {t('btc.commitTitle')}
-          </button>
-          
-          <button className="bg-vault-success hover:bg-green-600 text-white font-medium py-3 px-8 rounded-lg transition-colors">
-            {t('rewards.claim')}
-          </button>
-          
-          <button className="border border-gray-600 hover:bg-vault-secondary text-white font-medium py-3 px-8 rounded-lg transition-colors">
-            {t('kyc.title')}
-          </button>
-        </section>
-      </div>
-    </main>
+        </div>
+      </motion.section>
+    </div>
   );
 }

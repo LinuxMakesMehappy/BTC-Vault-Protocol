@@ -9,16 +9,16 @@ import zhTranslations from './locales/zh.json';
 import jaTranslations from './locales/ja.json';
 
 const resources = {
-  en: {
+  'en': {
     translation: enTranslations,
   },
-  es: {
+  'es': {
     translation: esTranslations,
   },
-  zh: {
+  'zh': {
     translation: zhTranslations,
   },
-  ja: {
+  'ja': {
     translation: jaTranslations,
   },
 };

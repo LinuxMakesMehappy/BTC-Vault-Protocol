@@ -1,53 +1,360 @@
 @tailwind base;
-@tailwind components;
-@tailwind utilities;
+\n@tailwind components;
+\n@tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+\n\n:root {
+  \n --vault-primary: #1a1a1a;
+  \n --vault-secondary: #2d2d2d;
+  \n --vault-accent: #f59e0b;
+  \n --vault-accent-hover: #d97706;
+  \n --vault-success: #10b981;
+  \n --vault-error: #ef4444;
+  \n --vault-warning: #f59e0b;
+  \n --vault-info: #3b82f6;
+  \n
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+\n\n* {
+  \n box-sizing: border-box;
+  \n padding: 0;
+  \n margin: 0;
+  \n
+}
+
+\n\nhtml,
+\nbody {
+  \n max-width: 100vw;
+  \n overflow-x: hidden;
+  \n font-family: var(--font-inter), system-ui, sans-serif;
+  \n
+}
+
+\n\nbody {
+  \n color: rgb(var(--foreground-rgb));
+  \n background: linear-gradient(135deg, var(--vault-primary) 0%, var(--vault-secondary) 100%);
+  \n min-height: 100vh;
+  \n
+}
+
+\n\na {
+  \n color: inherit;
+  \n text-decoration: none;
+  \n
+}
+
+\n\n@media (prefers-color-scheme: dark) {
+  \n html {
+    \n color-scheme: dark;
+    \n
   }
+
+  \n
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+\n\n
+
+/* Custom Components */
+\n.card {
+  \n @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 transition-all duration-300;
+  \n
 }
 
-/* Wallet adapter styles */
-.wallet-adapter-button {
-  @apply bg-vault-accent hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+\n\n.card:hover {
+  \n @apply border-vault-accent/30 shadow-lg shadow-vault-accent/10;
+  \n
 }
 
-.wallet-adapter-button-trigger {
-  @apply bg-vault-primary hover:bg-vault-secondary;
+\n\n.btn-primary {
+  \n @apply bg-vault-accent hover:bg-vault-accent-hover text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl;
+  \n
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+\n\n.btn-secondary {
+  \n @apply bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500;
+  \n
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
+\n\n.btn-success {
+  \n @apply bg-vault-success hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl;
+  \n
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+\n\n.btn-danger {
+  \n @apply bg-vault-error hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl;
+  \n
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500 dark:bg-gray-500;
+\n\n.text-gradient {
+  \n @apply bg-gradient-to-r from-vault-accent to-orange-400 bg-clip-text text-transparent;
+  \n
 }
+
+\n\n.input-field {
+  \n @apply bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-vault-accent focus:border-transparent transition-all duration-200;
+  \n
+}
+
+\n\n.select-field {
+  \n @apply bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-vault-accent focus:border-transparent transition-all duration-200;
+  \n
+}
+
+\n\n.checkbox-field {
+  \n @apply w-4 h-4 text-vault-accent bg-gray-800 border-gray-600 rounded focus:ring-vault-accent focus:ring-2;
+  \n
+}
+
+\n\n.radio-field {
+  \n @apply w-4 h-4 text-vault-accent bg-gray-800 border-gray-600 focus:ring-vault-accent focus:ring-2;
+  \n
+}
+
+\n\n.textarea-field {
+  \n @apply bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-vault-accent focus:border-transparent transition-all duration-200 resize-none;
+  \n
+}
+
+\n\n
+
+/* Loading States */
+\n.loading-spinner {
+  \n @apply animate-spin rounded-full h-8 w-8 border-b-2 border-vault-accent;
+  \n
+}
+
+\n\n.loading-dots {
+  \n @apply flex space-x-1;
+  \n
+}
+
+\n\n.loading-dots>div {
+  \n @apply w-2 h-2 bg-vault-accent rounded-full animate-pulse;
+  \n
+}
+
+\n\n.loading-dots>div:nth-child(2) {
+  \n animation-delay: 0.1s;
+  \n
+}
+
+\n\n.loading-dots>div:nth-child(3) {
+  \n animation-delay: 0.2s;
+  \n
+}
+
+\n\n
+
+/* Status Badges */
+\n.status-badge {
+  \n @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  \n
+}
+
+\n\n.status-success {
+  \n @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+  \n
+}
+
+\n\n.status-warning {
+  \n @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+  \n
+}
+
+\n\n.status-error {
+  \n @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+  \n
+}
+
+\n\n.status-info {
+  \n @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+  \n
+}
+
+\n\n.status-neutral {
+  \n @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200;
+  \n
+}
+
+\n\n
+
+/* Animations */
+\n@keyframes fadeIn {
+  \n from {
+    \n opacity: 0;
+    \n transform: translateY(10px);
+    \n
+  }
+
+  \n to {
+    \n opacity: 1;
+    \n transform: translateY(0);
+    \n
+  }
+
+  \n
+}
+
+\n\n@keyframes slideIn {
+  \n from {
+    \n transform: translateX(-100%);
+    \n
+  }
+
+  \n to {
+    \n transform: translateX(0);
+    \n
+  }
+
+  \n
+}
+
+\n\n@keyframes pulse {
+
+  \n 0%,
+  100% {
+    \n opacity: 1;
+    \n
+  }
+
+  \n 50% {
+    \n opacity: 0.5;
+    \n
+  }
+
+  \n
+}
+
+\n\n.animate-fadeIn {
+  \n animation: fadeIn 0.5s ease-out;
+  \n
+}
+
+\n\n.animate-slideIn {
+  \n animation: slideIn 0.3s ease-out;
+  \n
+}
+
+\n\n
+
+/* Scrollbar Styling */
+\n::-webkit-scrollbar {
+  \n width: 8px;
+  \n
+}
+
+\n\n::-webkit-scrollbar-track {
+  \n background: var(--vault-secondary);
+  \n
+}
+
+\n\n::-webkit-scrollbar-thumb {
+  \n background: var(--vault-accent);
+  \n border-radius: 4px;
+  \n
+}
+
+\n\n::-webkit-scrollbar-thumb:hover {
+  \n background: var(--vault-accent-hover);
+  \n
+}
+
+\n\n
+
+/* Focus States */
+\n.focus-ring {
+  \n @apply focus:outline-none focus:ring-2 focus:ring-vault-accent focus:ring-offset-2 focus:ring-offset-gray-900;
+  \n
+}
+
+\n\n
+
+/* Responsive Typography */
+\n.text-responsive-xl {
+  \n @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
+  \n
+}
+
+\n\n.text-responsive-lg {
+  \n @apply text-xl sm:text-2xl md:text-3xl;
+  \n
+}
+
+\n\n.text-responsive-md {
+  \n @apply text-lg sm:text-xl md:text-2xl;
+  \n
+}
+
+\n\n
+
+/* Utility Classes */
+\n.glass {
+  \n @apply bg-white/10 backdrop-blur-md border border-white/20;
+  \n
+}
+
+\n\n.glass-dark {
+  \n @apply bg-black/20 backdrop-blur-md border border-white/10;
+  \n
+}
+
+\n\n.shadow-glow {
+  \n box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  \n
+}
+
+\n\n.shadow-glow-lg {
+  \n box-shadow: 0 0 40px rgba(245, 158, 11, 0.4);
+  \n
+}
+
+\n\n
+/* Dark mode overrides */
+\n@media (prefers-color-scheme: dark) {
+  \n .dark\\:bg-vault-primary {
+    \n background-color: var(--vault-primary);
+    \n
+  }
+
+  \n \n .dark\\:bg-vault-secondary {
+    \n background-color: var(--vault-secondary);
+    \n
+  }
+
+  \n \n .dark\\:text-vault-accent {
+    \n color: var(--vault-accent);
+    \n
+  }
+
+  \n
+}
+
+\n\n
+/* Print Styles */
+\n@media print {
+  \n .no-print {
+    \n display: none !important;
+    \n
+  }
+
+  \n \n body {
+    \n background: white !important;
+    \n color: black !important;
+    \n
+  }
+
+  \n \n .card {
+    \n border: 1px solid #ccc !important;
+    \n background: white !important;
+    \n
+  }
+
+  \n
+}
+
+\n"\n
+ \n.stat-card {
+  \n @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 transition-all duration-300 hover:border-vault-accent/30;
+  \n
+}
+
+\n

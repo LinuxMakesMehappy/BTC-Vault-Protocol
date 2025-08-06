@@ -102,3 +102,50 @@ export interface VaultConfig {
     utxoVerification: string;
   };
 }
+
+// Dashboard-specific types
+export interface BTCCommitment {
+  user: string;
+  btc_amount: string;
+  commitment_hash: string;
+  timestamp: number;
+  status: 'pending' | 'verified' | 'failed';
+}
+
+export interface StakingPool {
+  pool_id: string;
+  asset_type: 'SOL' | 'ETH' | 'ATOM';
+  total_staked: string;
+  apy: string;
+  validator: string;
+}
+
+export interface RewardPool {
+  total_rewards: number;
+  available_rewards: number;
+  userRewards: number;
+  stakingRewards: number;
+  commitmentRewards: number;
+  referralRewards: number;
+  lastUpdate: number;
+}
+
+export interface RewardSummary {
+  total_rewards: string;
+  pending_rewards: string;
+  claimed_rewards: string;
+  staking_rewards: string;
+  commitment_rewards: string;
+  referral_rewards: string;
+  next_distribution: string;
+  apy: string;
+}
+
+export interface TreasuryData {
+  total_value_usd: string;
+  sol_allocation: string;
+  eth_allocation: string;
+  atom_allocation: string;
+  last_rebalance: string;
+  next_deposit: string;
+}

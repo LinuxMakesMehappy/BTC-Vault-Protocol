@@ -131,4 +131,121 @@ pub enum VaultError {
     
     #[msg("Reinvestment too frequent")]
     ReinvestmentTooFrequent,
+    
+    // KYC and compliance errors
+    #[msg("KYC verification already in progress")]
+    KYCAlreadyInProgress,
+    
+    #[msg("KYC already approved for this tier")]
+    KYCAlreadyApproved,
+    
+    #[msg("Too many documents submitted")]
+    TooManyDocuments,
+    
+    #[msg("Document type already exists")]
+    DocumentTypeAlreadyExists,
+    
+    #[msg("Document not found")]
+    DocumentNotFound,
+    
+    #[msg("Document already verified")]
+    DocumentAlreadyVerified,
+    
+    #[msg("Compliance violation detected")]
+    ComplianceViolation,
+    
+    #[msg("Invalid KYC status for this operation")]
+    InvalidKYCStatus,
+    
+    #[msg("Required document missing for tier")]
+    RequiredDocumentMissing,
+    
+    #[msg("Compliance screening required for this tier")]
+    ComplianceScreeningRequired,
+    
+    #[msg("Unauthorized compliance officer")]
+    UnauthorizedComplianceOfficer,
+    
+    #[msg("Commitment exceeds KYC limit")]
+    CommitmentExceedsKYCLimit,
+    
+    #[msg("Daily transaction limit exceeded")]
+    DailyLimitExceeded,
+    
+    #[msg("Reason text too long")]
+    ReasonTooLong,
+    
+    #[msg("High-risk user restriction")]
+    HighRiskUserRestriction,
+    
+    // Additional KYC and compliance errors
+    #[msg("Restricted jurisdiction")]
+    RestrictedJurisdiction,
+    
+    #[msg("AML screening disabled")]
+    AMLScreeningDisabled,
+    
+    #[msg("Account frozen for compliance")]
+    AccountFrozen,
+    
+    #[msg("Payment limit exceeded")]
+    PaymentLimitExceeded,
+    
+    #[msg("Compliance alert queue full")]
+    ComplianceAlertQueueFull,
+    
+    #[msg("Alert not found")]
+    AlertNotFound,
+    
+    #[msg("Review not due")]
+    ReviewNotDue,
+    
+    #[msg("KYC verification required")]
+    KYCVerificationRequired,
+    
+    #[msg("Enhanced due diligence required")]
+    EnhancedDueDiligenceRequired,
+    
+    #[msg("Manual review required")]
+    ManualReviewRequired,
+    
+    // Authentication and 2FA errors
+    #[msg("Two-factor authentication required")]
+    TwoFactorRequired,
+    
+    #[msg("Invalid authentication code")]
+    InvalidAuthCode,
+    
+    #[msg("Authentication factor not found")]
+    AuthFactorNotFound,
+    
+    #[msg("Authentication factor already exists")]
+    AuthFactorAlreadyExists,
+    
+    #[msg("Authentication factor is locked")]
+    AuthFactorLocked,
+    
+    #[msg("Too many authentication factors")]
+    TooManyAuthFactors,
+    
+    #[msg("Authentication method not allowed")]
+    AuthMethodNotAllowed,
+    
+    #[msg("Session not found")]
+    SessionNotFound,
+    
+    #[msg("Invalid session")]
+    InvalidSession,
+    
+    #[msg("Account is locked")]
+    AccountLocked,
+    
+    #[msg("Invalid backup code")]
+    InvalidBackupCode,
+    
+    #[msg("Invalid session timeout")]
+    InvalidSessionTimeout,
+    
+    #[msg("Invalid session limit")]
+    InvalidSessionLimit,
 }

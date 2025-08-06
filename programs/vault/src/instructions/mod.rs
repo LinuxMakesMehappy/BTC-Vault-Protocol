@@ -5,3 +5,5 @@ pub mod rewards;
 pub mod state_channel;
 pub mod multisig;
 pub mod payment;
+pub mod kyc;
+pub mod authentication;

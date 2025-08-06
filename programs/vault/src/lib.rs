@@ -12,8 +12,12 @@ use instructions::rewards::*;
 use instructions::state_channel::*;
 use instructions::multisig::*;
 use instructions::payment::*;
+use instructions::kyc::*;
+use instructions::authentication::*;
 use crate::traits::PaymentType;
 use crate::state::{StateChannelUpdate, RewardCalculation, SignerInfo, TransactionType, TransactionPriority, SignatureType, PaymentMethod, LightningConfig, UsdcConfig, ReinvestmentConfig};
+use crate::state::kyc_compliance::{KYCStatus, ComplianceRegion, KYCVerification, AMLScreening};
+use crate::state::authentication::{AuthMethod, SessionStatus, SecurityEventType};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -300,5 +304,206 @@ pub mod vault {
         paused: bool,
     ) -> Result<()> {
         instructions::payment::set_emergency_pause(ctx, paused)
+    }
+
+    // KYC and compliance instructions
+    pub fn initialize_compliance(
+        ctx: Context<InitializeCompliance>,
+        chainalysis_api_key: String,
+    ) -> Result<()> {
+        instructions::kyc::initialize_compliance(ctx, chainalysis_api_key)
+    }
+
+    pub fn initialize_user_compliance(
+        ctx: Context<InitializeUserCompliance>,
+        compliance_region: ComplianceRegion,
+    ) -> Result<()> {
+        instructions::kyc::initialize_user_compliance(ctx, compliance_region)
+    }
+
+    pub fn update_kyc_status(
+        ctx: Context<UpdateKYCStatus>,
+        new_status: KYCStatus,
+        verification: Option<KYCVerification>,
+    ) -> Result<()> {
+        instructions::kyc::update_kyc_status(ctx, new_status, verification)
+    }
+
+    pub fn perform_aml_screening(
+        ctx: Context<PerformAMLScreening>,
+        screening_data: crate::instructions::kyc::AMLScreeningData,
+    ) -> Result<()> {
+        instructions::kyc::perform_aml_screening(ctx, screening_data)
+    }
+
+    pub fn validate_transaction(
+        ctx: Context<ValidateTransaction>,
+        transaction_type: crate::instructions::kyc::TransactionValidationType,
+        amount: u64,
+        destination: Option<String>,
+    ) -> Result<()> {
+        instructions::kyc::validate_transaction(ctx, transaction_type, amount, destination)
+    }
+
+    pub fn resolve_alert(
+        ctx: Context<ResolveAlert>,
+        alert_id: String,
+        resolution_notes: String,
+    ) -> Result<()> {
+        instructions::kyc::resolve_alert(ctx, alert_id, resolution_notes)
+    }
+
+    pub fn freeze_account(
+        ctx: Context<FreezeAccount>,
+        reason: String,
+    ) -> Result<()> {
+        instructions::kyc::freeze_account(ctx, reason)
+    }
+
+    pub fn unfreeze_account(
+        ctx: Context<FreezeAccount>,
+    ) -> Result<()> {
+        instructions::kyc::unfreeze_account(ctx)
+    }
+
+    pub fn update_compliance_config(
+        ctx: Context<UpdateComplianceConfig>,
+        screening_enabled: Option<bool>,
+        auto_freeze_enabled: Option<bool>,
+        manual_review_threshold: Option<u64>,
+        enhanced_dd_threshold: Option<u64>,
+    ) -> Result<()> {
+        instructions::kyc::update_compliance_config(ctx, screening_enabled, auto_freeze_enabled, manual_review_threshold, enhanced_dd_threshold)
+    }
+
+    pub fn perform_compliance_review(
+        ctx: Context<PerformAMLScreening>,
+    ) -> Result<()> {
+        instructions::kyc::perform_compliance_review(ctx)
+    }
+
+    pub fn get_compliance_summary(
+        ctx: Context<ValidateTransaction>,
+    ) -> Result<()> {
+        instructions::kyc::get_compliance_summary(ctx)
+    }
+
+    // Authentication and 2FA instructions
+    pub fn initialize_auth_config(
+        ctx: Context<InitializeAuthConfig>,
+    ) -> Result<()> {
+        instructions::authentication::initialize_auth_config(ctx)
+    }
+
+    pub fn initialize_user_auth(
+        ctx: Context<InitializeAuth>,
+    ) -> Result<()> {
+        instructions::authentication::initialize_user_auth(ctx)
+    }
+
+    pub fn add_auth_factor(
+        ctx: Context<AddAuthFactor>,
+        method: AuthMethod,
+        identifier: String,
+        secret_hash: [u8; 32],
+        backup_codes: Vec<String>,
+    ) -> Result<()> {
+        instructions::authentication::add_auth_factor(ctx, method, identifier, secret_hash, backup_codes)
+    }
+
+    pub fn verify_auth_factor(
+        ctx: Context<VerifyAuthFactor>,
+        method: AuthMethod,
+        identifier: String,
+        provided_code: String,
+    ) -> Result<()> {
+        instructions::authentication::verify_auth_factor(ctx, method, identifier, provided_code)
+    }
+
+    pub fn create_session(
+        ctx: Context<CreateSession>,
+        device_id: String,
+        ip_address: String,
+        user_agent: String,
+        auth_methods: Vec<AuthMethod>,
+    ) -> Result<()> {
+        instructions::authentication::create_session(ctx, device_id, ip_address, user_agent, auth_methods)
+    }
+
+    pub fn validate_session(
+        ctx: Context<ValidateSession>,
+        session_id: String,
+    ) -> Result<()> {
+        instructions::authentication::validate_session(ctx, session_id)
+    }
+
+    pub fn revoke_session(
+        ctx: Context<RevokeSession>,
+        session_id: String,
+    ) -> Result<()> {
+        instructions::authentication::revoke_session(ctx, session_id)
+    }
+
+    pub fn lock_account(
+        ctx: Context<LockAccount>,
+        reason: String,
+    ) -> Result<()> {
+        instructions::authentication::lock_account(ctx, reason)
+    }
+
+    pub fn unlock_account(
+        ctx: Context<LockAccount>,
+    ) -> Result<()> {
+        instructions::authentication::unlock_account(ctx)
+    }
+
+    pub fn update_auth_config(
+        ctx: Context<UpdateAuthConfig>,
+        require_2fa_globally: Option<bool>,
+        session_timeout_min: Option<u32>,
+        session_timeout_max: Option<u32>,
+        max_failed_attempts: Option<u32>,
+        lockout_duration: Option<i64>,
+    ) -> Result<()> {
+        instructions::authentication::update_auth_config(ctx, require_2fa_globally, session_timeout_min, session_timeout_max, max_failed_attempts, lockout_duration)
+    }
+
+    pub fn check_2fa_requirement(
+        ctx: Context<ValidateSession>,
+        operation_type: String,
+        amount: Option<u64>,
+    ) -> Result<()> {
+        instructions::authentication::check_2fa_requirement(ctx, operation_type, amount)
+    }
+
+    pub fn get_security_status(
+        ctx: Context<ValidateSession>,
+    ) -> Result<()> {
+        instructions::authentication::get_security_status(ctx)
+    }
+
+    pub fn generate_backup_codes(
+        ctx: Context<AddAuthFactor>,
+    ) -> Result<Vec<String>> {
+        instructions::authentication::generate_backup_codes(ctx)
+    }
+
+    pub fn verify_backup_code(
+        ctx: Context<VerifyAuthFactor>,
+        backup_code: String,
+    ) -> Result<()> {
+        instructions::authentication::verify_backup_code(ctx, backup_code)
+    }
+
+    pub fn update_security_settings(
+        ctx: Context<AddAuthFactor>,
+        require_2fa_for_all: Option<bool>,
+        require_2fa_for_payments: Option<bool>,
+        require_2fa_for_high_value: Option<bool>,
+        session_timeout: Option<u32>,
+        max_concurrent_sessions: Option<u8>,
+        auto_lock_on_suspicious: Option<bool>,
+    ) -> Result<()> {
+        instructions::authentication::update_security_settings(ctx, require_2fa_for_all, require_2fa_for_payments, require_2fa_for_high_value, session_timeout, max_concurrent_sessions, auto_lock_on_suspicious)
     }
 }
