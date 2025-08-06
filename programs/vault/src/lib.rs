@@ -10,10 +10,12 @@ use instructions::oracle::*;
 use instructions::staking::*;
 use instructions::rewards::*;
 use instructions::state_channel::*;
+use instructions::enhanced_state_channel::*;
 use instructions::multisig::*;
 use instructions::payment::*;
 use instructions::kyc::*;
 use instructions::authentication::*;
+use instructions::treasury_management::*;
 use crate::traits::PaymentType;
 use crate::state::{StateChannelUpdate, RewardCalculation, SignerInfo, TransactionType, TransactionPriority, SignatureType, PaymentMethod, LightningConfig, UsdcConfig, ReinvestmentConfig};
 use crate::state::kyc_compliance::{KYCStatus, ComplianceRegion, KYCVerification, AMLScreening};
@@ -505,5 +507,160 @@ pub mod vault {
         auto_lock_on_suspicious: Option<bool>,
     ) -> Result<()> {
         instructions::authentication::update_security_settings(ctx, require_2fa_for_all, require_2fa_for_payments, require_2fa_for_high_value, session_timeout, max_concurrent_sessions, auto_lock_on_suspicious)
+    }
+
+    // Treasury Management instructions
+    pub fn initialize_treasury_vault(
+        ctx: Context<InitializeTreasuryVault>,
+    ) -> Result<()> {
+        instructions::treasury_management::InitializeTreasuryVault::process(ctx, ctx.bumps.treasury_vault)
+    }
+
+    pub fn add_yield_strategy(
+        ctx: Context<AddYieldStrategy>,
+        strategy_id: u64,
+        name: String,
+        protocol: String,
+        strategy_type: crate::state::treasury_management::StrategyType,
+        assets: Vec<Pubkey>,
+        allocated_amount: u64,
+        expected_apy: u16,
+        risk_level: u8,
+        parameters: Vec<u8>,
+    ) -> Result<()> {
+        instructions::treasury_management::AddYieldStrategy::process(ctx, strategy_id, name, protocol, strategy_type, assets, allocated_amount, expected_apy, risk_level, parameters)
+    }
+
+    pub fn add_liquidity_pool(
+        ctx: Context<AddLiquidityPool>,
+        pool_id: Pubkey,
+        dex_protocol: String,
+        liquidity_amount: u64,
+    ) -> Result<()> {
+        instructions::treasury_management::AddLiquidityPool::process(ctx, pool_id, dex_protocol, liquidity_amount)
+    }
+
+    pub fn execute_advanced_rebalancing(
+        ctx: Context<ExecuteAdvancedRebalancing>,
+        amount: u64,
+        strategy_id: Option<u64>,
+    ) -> Result<()> {
+        instructions::treasury_management::ExecuteAdvancedRebalancing::process(ctx, amount, strategy_id)
+    }
+
+    pub fn update_treasury_performance(
+        ctx: Context<UpdateTreasuryPerformance>,
+        new_metrics: crate::state::treasury_management::PerformanceMetrics,
+    ) -> Result<()> {
+        instructions::treasury_management::UpdateTreasuryPerformance::process(ctx, new_metrics)
+    }
+
+    pub fn create_treasury_proposal(
+        ctx: Context<CreateTreasuryProposal>,
+        proposal_id: u64,
+        title: String,
+        description: String,
+        proposal_type: crate::state::treasury_management::ProposalType,
+        parameters: Vec<u8>,
+        voting_duration: i64,
+        quorum_threshold: u16,
+        approval_threshold: u16,
+    ) -> Result<()> {
+        instructions::treasury_management::CreateTreasuryProposal::process(ctx, proposal_id, title, description, proposal_type, parameters, voting_duration, quorum_threshold, approval_threshold, ctx.bumps.treasury_proposal)
+    }
+
+    pub fn vote_on_treasury_proposal(
+        ctx: Context<VoteOnTreasuryProposal>,
+        vote_for: bool,
+        voting_power: u64,
+    ) -> Result<()> {
+        instructions::treasury_management::VoteOnTreasuryProposal::process(ctx, vote_for, voting_power)
+    }
+
+    pub fn emergency_pause_treasury(
+        ctx: Context<EmergencyPauseTreasury>,
+    ) -> Result<()> {
+        instructions::treasury_management::EmergencyPauseTreasury::process(ctx)
+    }
+
+    pub fn update_risk_parameters(
+        ctx: Context<UpdateRiskParameters>,
+        new_risk_params: crate::state::treasury_management::RiskParameters,
+    ) -> Result<()> {
+        instructions::treasury_management::UpdateRiskParameters::process(ctx, new_risk_params)
+    }
+
+    // Enhanced State Channel instructions
+    pub fn initialize_enhanced_state_channel(
+        ctx: Context<InitializeEnhancedStateChannel>,
+        channel_id: [u8; 32],
+        participants: Vec<crate::state::enhanced_state_channel::ChannelParticipant>,
+        config: crate::state::enhanced_state_channel::ChannelConfig,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::InitializeEnhancedStateChannel::process(ctx, channel_id, participants, config, ctx.bumps.enhanced_channel)
+    }
+
+    pub fn activate_enhanced_channel(
+        ctx: Context<ActivateEnhancedChannel>,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::ActivateEnhancedChannel::process(ctx)
+    }
+
+    pub fn process_hft_operation(
+        ctx: Context<ProcessHFTOperation>,
+        operation: crate::state::enhanced_state_channel::HFTOperation,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::ProcessHFTOperation::process(ctx, operation)
+    }
+
+    pub fn process_micro_transaction(
+        ctx: Context<ProcessMicroTransaction>,
+        transaction: crate::state::enhanced_state_channel::MicroTransaction,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::ProcessMicroTransaction::process(ctx, transaction)
+    }
+
+    pub fn add_pending_operation(
+        ctx: Context<AddPendingOperation>,
+        operation: crate::state::enhanced_state_channel::PendingOperation,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::AddPendingOperation::process(ctx, operation)
+    }
+
+    pub fn confirm_operation(
+        ctx: Context<ConfirmOperation>,
+        operation_id: u64,
+        signature: [u8; 64],
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::ConfirmOperation::process(ctx, operation_id, signature)
+    }
+
+    pub fn initiate_dispute(
+        ctx: Context<InitiateDispute>,
+        disputed_state: [u8; 32],
+        evidence: Vec<u8>,
+        dispute_type: crate::state::enhanced_state_channel::DisputeType,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::InitiateDispute::process(ctx, disputed_state, evidence, dispute_type)
+    }
+
+    pub fn resolve_dispute(
+        ctx: Context<ResolveDispute>,
+        resolution: crate::state::enhanced_state_channel::DisputeResolution,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::ResolveDispute::process(ctx, resolution)
+    }
+
+    pub fn close_enhanced_channel(
+        ctx: Context<CloseEnhancedChannel>,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::CloseEnhancedChannel::process(ctx)
+    }
+
+    pub fn batch_process_operations(
+        ctx: Context<BatchProcessOperations>,
+        operations: Vec<crate::state::enhanced_state_channel::HFTOperation>,
+    ) -> Result<()> {
+        instructions::enhanced_state_channel::BatchProcessOperations::process(ctx, operations)
     }
 }

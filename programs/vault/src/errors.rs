@@ -248,4 +248,50 @@ pub enum VaultError {
     
     #[msg("Invalid session limit")]
     InvalidSessionLimit,
+    
+    // Treasury management errors
+    #[msg("Treasury is paused")]
+    TreasuryPaused,
+    
+    #[msg("Deposit not due")]
+    DepositNotDue,
+    
+    #[msg("Invalid deposit amount")]
+    InvalidDepositAmount,
+    
+    #[msg("Invalid deposit frequency")]
+    InvalidDepositFrequency,
+    
+    #[msg("Invalid rebalance threshold")]
+    InvalidRebalanceThreshold,
+    
+    #[msg("Invalid withdrawal reason")]
+    InvalidWithdrawalReason,
+    
+    #[msg("Invalid oracle price")]
+    InvalidOraclePrice,
+    
+    #[msg("Math overflow")]
+    MathOverflow,
+    
+    #[msg("Treasury balance insufficient")]
+    TreasuryInsufficientBalance,
+    
+    #[msg("Rebalancing not needed")]
+    RebalancingNotNeeded,
+    
+    #[msg("Asset allocation out of bounds")]
+    AssetAllocationOutOfBounds,
+    
+    #[msg("Treasury not initialized")]
+    TreasuryNotInitialized,
+    
+    #[msg("Invalid asset type")]
+    InvalidAssetType,
+    
+    #[msg("Deposit limit exceeded")]
+    DepositLimitExceeded,
+    
+    #[msg("Treasury emergency mode active")]
+    TreasuryEmergencyMode,
 }

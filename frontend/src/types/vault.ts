@@ -87,6 +87,101 @@ export interface KYCStatus {
   documentsRequired: string[];
 }
 
+// Enhanced KYC Types
+export interface KYCProfile {
+  user: string;
+  tier: 'none' | 'basic' | 'enhanced' | 'institutional';
+  status: 'not_started' | 'pending' | 'approved' | 'rejected' | 'expired' | 'suspended';
+  documents: KYCDocument[];
+  commitmentLimit: number;
+  dailyLimit: number;
+  monthlyVolume: number;
+  lastScreeningDate: number;
+  kycExpiryDate?: number;
+  complianceScreening?: ComplianceScreening;
+}
+
+export interface KYCDocument {
+  type: 'passport' | 'drivers_license' | 'national_id' | 'proof_of_address' | 'bank_statement' | 'tax_document' | 'corporate_registration' | 'beneficial_ownership';
+  hash: string;
+  uploaded: boolean;
+  verified: boolean;
+  uploadDate?: Date;
+  verificationDate?: Date;
+  expiryDate?: Date;
+}
+
+export interface ComplianceScreening {
+  riskLevel: 'low' | 'medium' | 'high' | 'prohibited';
+  sanctionsMatch: boolean;
+  pepMatch: boolean;
+  adverseMedia: boolean;
+  screeningDate: number;
+  expiryDate: number;
+  notes?: string;
+}
+
+// Enhanced Authentication Types
+export interface AuthStatus {
+  isAuthenticated: boolean;
+  twoFactorEnabled: boolean;
+  authMethods: AuthFactor[];
+  activeSessions: UserSession[];
+  accountLocked: boolean;
+  lastLogin: number;
+  securityEvents?: SecurityEvent[];
+  securitySettings?: SecuritySettings;
+}
+
+export interface AuthFactor {
+  method: 'totp' | 'webauthn' | 'sms' | 'email' | 'passkey';
+  identifier: string;
+  enabled: boolean;
+  verified: boolean;
+  createdAt: Date;
+  lastUsed: Date;
+  failureCount: number;
+  locked: boolean;
+}
+
+export interface UserSession {
+  sessionId: string;
+  deviceId: string;
+  ipAddress: string;
+  userAgent: string;
+  status: 'active' | 'expired' | 'revoked' | 'compromised';
+  createdAt: Date;
+  lastActivity: Date;
+  expiresAt: Date;
+  authMethods: string[];
+  riskScore: number;
+  isCurrent: boolean;
+}
+
+export interface SecurityEvent {
+  eventId: string;
+  eventType: 'login_success' | 'login_failure' | 'two_factor_success' | 'two_factor_failure' | 'session_created' | 'session_expired' | 'suspicious_activity' | 'account_locked';
+  timestamp: Date;
+  details: string;
+  riskLevel: number;
+  resolved: boolean;
+  ipAddress?: string;
+  deviceId?: string;
+}
+
+export interface SecuritySettings {
+  require2FAForAll: boolean;
+  require2FAForPayments: boolean;
+  require2FAForHighValue: boolean;
+  sessionTimeout: number;
+  maxConcurrentSessions: number;
+  enableEmailNotifications: boolean;
+  enableSMSNotifications: boolean;
+  autoLockOnSuspicious: boolean;
+  trustedDevices: string[];
+  ipWhitelist: string[];
+}
+
 export type PaymentType = 'BTC' | 'USDC' | 'AutoReinvest';
 
 export type WalletType = 'BlueWallet' | 'Ledger' | 'Phantom' | 'Solflare';
@@ -148,4 +243,13 @@ export interface TreasuryData {
   atom_allocation: string;
   last_rebalance: string;
   next_deposit: string;
+}
+
+export interface PaymentHistory {
+  id: string;
+  amount: number;
+  currency: 'BTC' | 'USDC';
+  timestamp: number;
+  status: 'pending' | 'completed' | 'failed';
+  type?: string;
 }

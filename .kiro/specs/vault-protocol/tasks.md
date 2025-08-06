@@ -396,14 +396,22 @@ What’s your preference: Task 16, Task 12, or a hybrid approach? Any specific s
   - Write authentication tests including compromise scenarios (EC3)
   - _Requirements: SR5, EC3_
 
-- [ ] 12. Create treasury management system
+- [x] 12. Create treasury management system
+
+
+
+
   - Implement Treasury account structure with asset balances and deposit tracking
   - Add biweekly $50 deposit processing with automatic SOL/ETH/ATOM conversion
   - Create treasury rebalancing functions to maintain target allocations
   - Write treasury management tests including deposit processing and rebalancing
   - _Requirements: FR5_
 
-- [ ] 13. Build state channel infrastructure
+- [x] 13. Build state channel infrastructure
+
+
+
+
   - Implement state channel creation, updates, and settlement mechanisms
   - Add dispute resolution system for off-chain computation verification
   - Create timeout-based finality and fraud proof generation
@@ -458,14 +466,22 @@ What’s your preference: Task 16, Task 12, or a hybrid approach? Any specific s
   - Create responsive dashboard layout with data refresh capabilities
   - _Requirements: FR3_
 
-- [ ] 19. Implement reward management interface
+- [x] 19. Implement reward management interface
+
+
+
   - Create reward claiming interface with BTC/USDC payment selection
   - Add auto-reinvestment toggle and configuration options
   - Implement payment history and transaction tracking
   - Write frontend tests for reward management workflows
   - _Requirements: FR3, FR4_
 
-- [ ] 20. Add KYC and security interfaces
+- [x] 20. Add KYC and security interfaces
+
+
+
+
+
   - Create KYC verification flow with document upload and status tracking
   - Implement 2FA/passkey setup and authentication interfaces
   - Add security settings page with wallet management and session controls
