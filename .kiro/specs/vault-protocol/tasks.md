@@ -419,6 +419,8 @@ What’s your preference: Task 16, Task 12, or a hybrid approach? Any specific s
   - _Requirements: FR2, SR2_
 
 - [ ] 14. Create Python configuration system
+
+
   - Write chainlink.py config with oracle feed addresses and verification intervals
   - Create validators.py config for staking validator selection and parameters
   - Implement treasury.py config for deposit schedules and allocation percentages

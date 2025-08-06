@@ -1,63 +1,109 @@
-# Rust
-target/
-Cargo.lock
-**/*.rs.bk
+# BTC Vault Protocol - Professional .gitignore
+# Classification: CONFIDENTIAL - AUTHORIZED PERSONNEL ONLY
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# ============================================================================
+# SECURITY AND SENSITIVE DATA
+# ============================================================================
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Security
+# Cryptographic Keys and Certificates
 *.pem
 *.key
 *.crt
 *.p12
 *.pfx
+*.jks
+*.keystore
+*.truststore
+keypairs/
+keys/
+certificates/
+secrets/
 
-# Build artifacts
-dist/
-build/
-out/
+# Environment and Configuration Files
+.env*
+!.env.example
+config/production.json
+config/staging.json
+*.config.local
+*.config.production
+*.config.staging
 
-# Test coverage
-coverage/
-*.lcov
+# Authentication and Session Data
+*.session
+*.token
+*.jwt
+auth/
+sessions/
 
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
+# Database Credentials and Connection Strings
+database.json
+db.json
+*.db.json
+connection-strings.json
+
+# Hardware Security Module (HSM) Configuration
+hsm/
+*.hsm
+hsm-config.*
+
+# Multi-signature Wallet Data
+multisig/
+*.multisig
+wallet-config.*
+
+# ============================================================================
+# BLOCKCHAIN AND SOLANA SPECIFIC
+# ============================================================================
+
+# Anchor Framework
+.anchor/
+test-ledger/
+validator-ledger/
+
+# Solana Keypairs and Wallets
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!anchor.json
+!jest.config.json
+!tailwind.config.json
+!next.config.json
+!vercel.json
+
+# Solana Program Artifacts
+target/
+programs/target/
+*.so
+
+# Chainlink Oracle Configuration
+oracle-config/
+chainlink/
+*.oracle
+
+# State Channel Data
+state-channels/
+*.channel
+
+# ============================================================================
+# DEVELOPMENT ENVIRONMENT
+# ============================================================================
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.orig
+
+# Node.js and NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+.yarn/
+.pnp.*
 
 # Python
 __pycache__/
@@ -65,19 +111,279 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python Virtual Environments
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.venv/
+.ENV/
 
-# Anchor
-.anchor/
-test-ledger/
+# ============================================================================
+# BUILD ARTIFACTS AND OUTPUTS
+# ============================================================================
 
-# Solana
-keypairs/
-*.json
-!package.json
-!tsconfig.json
-!anchor.json
+# Build Directories
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.vercel/
+
+# Compiled Assets
+*.min.js
+*.min.css
+*.bundle.js
+*.bundle.css
+
+# Source Maps
+*.map
+
+# ============================================================================
+# TESTING AND COVERAGE
+# ============================================================================
+
+# Test Coverage Reports
+coverage/
+*.lcov
+.nyc_output/
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.cache/
+
+# Test Results
+test-results/
+junit.xml
+*.test.log
+
+# Performance Testing
+benchmark-results/
+load-test-results/
+
+# ============================================================================
+# LOGGING AND MONITORING
+# ============================================================================
+
+# Log Files
+*.log
+logs/
+log/
+*.log.*
+audit-logs/
+security-logs/
+access-logs/
+
+# Monitoring Data
+metrics/
+traces/
+monitoring/
+
+# Error Reports
+error-reports/
+crash-dumps/
+*.dmp
+
+# ============================================================================
+# IDE AND EDITOR CONFIGURATION
+# ============================================================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim and Emacs
+*.swp
+*.swo
+*~
+.#*
+\#*#
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ============================================================================
+# TEMPORARY AND CACHE FILES
+# ============================================================================
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# Cache Directories
+.cache/
+cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Lock Files (keep package-lock.json but ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+# ============================================================================
+# DOCUMENTATION AND REPORTS
+# ============================================================================
+
+# Generated Documentation
+docs/generated/
+api-docs/
+coverage-reports/
+
+# Security Reports (keep templates, ignore generated)
+security-reports/
+audit-reports/
+penetration-test-reports/
+
+# Compliance Reports
+compliance-reports/
+regulatory-reports/
+
+# ============================================================================
+# DEPLOYMENT AND INFRASTRUCTURE
+# ============================================================================
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+*.kubeconfig
+k8s-secrets/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+
+# Cloud Provider Configurations
+.aws/
+.gcp/
+.azure/
+
+# ============================================================================
+# DEVELOPMENT ARTIFACTS
+# ============================================================================
+
+# Task Implementation Summaries (Development Artifacts)
+TASK_*_IMPLEMENTATION_SUMMARY.md
+TASK_*_COMPLETION_SUMMARY.md
+
+# Development Notes and Scratch Files
+notes/
+scratch/
+todo.md
+TODO.md
+NOTES.md
+
+# Backup Files
+*.backup
+*.bak
+*.orig
+
+# ============================================================================
+# SECURITY SCANNING AND ANALYSIS
+# ============================================================================
+
+# Security Scan Results
+bandit-report.json
+safety-report.json
+semgrep-results.json
+sonarqube-results/
+
+# Dependency Vulnerability Reports
+npm-audit.json
+yarn-audit.json
+pip-audit.json
+
+# Static Analysis Results
+eslint-results.json
+pylint-results.json
+clippy-results.json
+
+# ============================================================================
+# CUSTOM PROJECT EXCLUSIONS
+# ============================================================================
+
+# Project-specific temporary files
+chainlink_config.json
+validator-keypair.json
+program-keypair.json
+
+# Development databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Local development overrides
+local-config.*
+dev-overrides.*
+
+# ============================================================================
+# END OF FILE
+# ============================================================================
