@@ -42,19 +42,19 @@ pub enum VaultError {
     PaymentFailed,
     
     #[msg("Security violation detected")]
-    SecurityViolation(String),
+    SecurityViolation,
     
-    #[msg("CVE detected: {cve_id} in {crate_name}")]
-    CveDetected { cve_id: String, crate_name: String },
+    #[msg("CVE detected in dependency")]
+    CveDetected,
     
-    #[msg("WebAssembly execution failed: {0}")]
-    WasmExecutionFailed(String),
+    #[msg("WebAssembly execution failed")]
+    WasmExecutionFailed,
     
-    #[msg("Formal verification failed: {0}")]
-    VerificationFailed(String),
+    #[msg("Formal verification failed")]
+    VerificationFailed,
     
-    #[msg("Cryptographic operation failed: {0}")]
-    CryptographicError(String),
+    #[msg("Cryptographic operation failed")]
+    CryptographicError,
     
     #[msg("Unauthorized access - owner verification failed")]
     UnauthorizedAccess,

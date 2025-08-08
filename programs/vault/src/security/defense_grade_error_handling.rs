@@ -36,7 +36,7 @@ pub struct SecurityContext {
 }
 
 /// Security classification levels per DoD standards
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ClassificationLevel {
     Unclassified,
     Confidential,
@@ -369,9 +369,7 @@ impl DefenseGradeErrorHandler {
             },
             Err(panic_payload) => {
                 // Handle panic as critical security incident
-                let panic_error = VaultError::SecurityViolation(
-                    "Critical system panic detected - potential security breach".to_string()
-                );
+                let panic_error = VaultError::SecurityViolation;
                 
                 // Create critical incident
                 let incident_id = self.incident_tracker.create_critical_incident(
@@ -396,9 +394,7 @@ impl DefenseGradeErrorHandler {
         match option {
             Some(value) => Ok(value),
             None => {
-                let error = VaultError::SecurityViolation(
-                    format!("Secure unwrap failed: {}", error_message)
-                );
+                let error = VaultError::SecurityViolation;
                 self.handle_error(Err(error), "secure_unwrap", source_location)
             }
         }
@@ -414,10 +410,8 @@ impl DefenseGradeErrorHandler {
     {
         match result {
             Ok(value) => Ok(value),
-            Err(e) => {
-                let error = VaultError::SecurityViolation(
-                    format!("Secure expect failed: {} - {:?}", error_message, e)
-                );
+            Err(_e) => {
+                let error = VaultError::SecurityViolation;
                 self.handle_error(Err(error), "secure_expect", source_location)
             }
         }
@@ -425,27 +419,27 @@ impl DefenseGradeErrorHandler {
 
     // Private helper methods
     fn generate_operation_id() -> String {
-        format!("OP_{}", Utc::now().timestamp_nanos())
+        format!("OP_{}", Utc::now().timestamp_nanos_opt().unwrap_or(0))
     }
 
     fn generate_event_id() -> String {
-        format!("EVT_{}", Utc::now().timestamp_nanos())
+        format!("EVT_{}", Utc::now().timestamp_nanos_opt().unwrap_or(0))
     }
 
     fn get_error_type(error: &VaultError) -> String {
         match error {
-            VaultError::SecurityViolation(_) => "SECURITY_VIOLATION".to_string(),
-            VaultError::CveDetected { .. } => "CVE_DETECTED".to_string(),
-            VaultError::WasmExecutionFailed(_) => "WASM_EXECUTION_FAILED".to_string(),
-            VaultError::VerificationFailed(_) => "VERIFICATION_FAILED".to_string(),
-            VaultError::CryptographicError(_) => "CRYPTOGRAPHIC_ERROR".to_string(),
+            VaultError::SecurityViolation => "SECURITY_VIOLATION".to_string(),
+            VaultError::CveDetected => "CVE_DETECTED".to_string(),
+            VaultError::WasmExecutionFailed => "WASM_EXECUTION_FAILED".to_string(),
+            VaultError::VerificationFailed => "VERIFICATION_FAILED".to_string(),
+            VaultError::CryptographicError => "CRYPTOGRAPHIC_ERROR".to_string(),
             _ => "UNKNOWN_ERROR".to_string(),
         }
     }
 
     fn assess_security_impact(&self, error: &VaultError, classification: &ClassificationRule) -> SecurityImpact {
         match error {
-            VaultError::SecurityViolation(_) => SecurityImpact {
+            VaultError::SecurityViolation => SecurityImpact {
                 confidentiality_impact: ImpactLevel::High,
                 integrity_impact: ImpactLevel::High,
                 availability_impact: ImpactLevel::Moderate,
@@ -457,7 +451,7 @@ impl DefenseGradeErrorHandler {
                 ],
                 affected_assets: vec!["User data".to_string(), "System integrity".to_string()],
             },
-            VaultError::CryptographicError(_) => SecurityImpact {
+            VaultError::CryptographicError => SecurityImpact {
                 confidentiality_impact: ImpactLevel::Critical,
                 integrity_impact: ImpactLevel::Critical,
                 availability_impact: ImpactLevel::Low,
@@ -491,13 +485,13 @@ impl DefenseGradeErrorHandler {
 
     fn generate_remediation_actions(&self, error: &VaultError) -> Vec<String> {
         match error {
-            VaultError::SecurityViolation(_) => vec![
+            VaultError::SecurityViolation => vec![
                 "Investigate potential security breach".to_string(),
                 "Review access logs".to_string(),
                 "Verify system integrity".to_string(),
                 "Consider user account lockdown".to_string(),
             ],
-            VaultError::CryptographicError(_) => vec![
+            VaultError::CryptographicError => vec![
                 "Verify cryptographic key integrity".to_string(),
                 "Check for key compromise indicators".to_string(),
                 "Rotate affected keys if necessary".to_string(),
@@ -536,12 +530,9 @@ impl DefenseGradeErrorHandler {
         // 6. Prepare for potential system shutdown
     }
 
-    fn create_sanitized_error(&self, original_error: &VaultError, audit_entry: &AuditLogEntry) -> anchor_lang::error::Error {
+    fn create_sanitized_error(&self, _original_error: &VaultError, _audit_entry: &AuditLogEntry) -> anchor_lang::error::Error {
         // Return sanitized error that doesn't leak sensitive information
-        VaultError::SecurityViolation(
-            format!("Security error detected - Event ID: {} - Contact security team", 
-                   audit_entry.event_id)
-        ).into()
+        VaultError::SecurityViolation.into()
     }
 }
 
@@ -664,7 +655,7 @@ impl IncidentTracker {
     }
 
     fn generate_event_id() -> String {
-        format!("EVT_{}", Utc::now().timestamp_nanos())
+        format!("EVT_{}", Utc::now().timestamp_nanos_opt().unwrap_or(0))
     }
 }
 

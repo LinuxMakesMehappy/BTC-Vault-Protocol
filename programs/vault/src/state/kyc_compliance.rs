@@ -492,3 +492,36 @@ impl ComplianceReport {
         32 + // data_hash
         1; // bump
 }
+/// Compliance region for regulatory requirements
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub enum ComplianceRegion {
+    US,
+    EU,
+    UK,
+    Canada,
+    Australia,
+    Japan,
+    Singapore,
+    Other(String),
+}
+
+/// KYC verification data
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct KYCVerification {
+    pub document_type: DocumentType,
+    pub document_hash: [u8; 32],
+    pub verification_date: i64,
+    pub verified_by: Pubkey,
+    pub expiry_date: Option<i64>,
+}
+
+/// AML screening data
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct AMLScreening {
+    pub screening_id: String,
+    pub risk_score: u16,
+    pub screening_date: i64,
+    pub alerts: Vec<String>,
+    pub sanctions_match: bool,
+    pub pep_match: bool,
+}
