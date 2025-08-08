@@ -517,7 +517,8 @@ pub mod vault {
     pub fn initialize_treasury_vault(
         ctx: Context<InitializeTreasuryVault>,
     ) -> Result<()> {
-        instructions::treasury_management::InitializeTreasuryVault::process(ctx, ctx.bumps.treasury_vault)
+        let bump = ctx.bumps.treasury_vault;
+        instructions::treasury_management::InitializeTreasuryVault::process(ctx, bump)
     }
 
     pub fn add_yield_strategy(
@@ -570,7 +571,8 @@ pub mod vault {
         quorum_threshold: u16,
         approval_threshold: u16,
     ) -> Result<()> {
-        instructions::treasury_management::CreateTreasuryProposal::process(ctx, proposal_id, title, description, proposal_type, parameters, voting_duration, quorum_threshold, approval_threshold, ctx.bumps.treasury_proposal)
+        let bump = ctx.bumps.treasury_proposal;
+        instructions::treasury_management::CreateTreasuryProposal::process(ctx, proposal_id, title, description, proposal_type, parameters, voting_duration, quorum_threshold, approval_threshold, bump)
     }
 
     pub fn vote_on_treasury_proposal(
