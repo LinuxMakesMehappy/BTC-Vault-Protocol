@@ -487,7 +487,7 @@ impl TreasuryVault {
             return false;
         }
         
-        let current_time = Clock::get().unwrap().unix_timestamp;
+        let current_time = Clock::get().map_err(|_| VaultError::ClockUnavailable)?.unix_timestamp;
         let time_since_last = current_time - self.rebalancing_config.last_rebalancing;
         
         // Check time-based rebalancing

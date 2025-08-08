@@ -201,7 +201,8 @@ class ChainlinkConfigManager:
     
     def __init__(self, network: Network = Network.DEVNET):
         self.network = network
-        self.config = DEFAULT_CONFIGS[network].copy() if network in DEFAULT_CONFIGS else DEFAULT_CONFIGS[Network.DEVNET]
+        import copy
+        self.config = copy.deepcopy(DEFAULT_CONFIGS[network]) if network in DEFAULT_CONFIGS else copy.deepcopy(DEFAULT_CONFIGS[Network.DEVNET])
         self._load_environment_overrides()
     
     def _load_environment_overrides(self):

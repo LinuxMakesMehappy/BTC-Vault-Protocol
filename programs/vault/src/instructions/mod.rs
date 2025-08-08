@@ -9,3 +9,4 @@ pub mod payment;
 pub mod kyc;
 pub mod authentication;
 pub mod treasury_management;
+pub mod security_monitoring;

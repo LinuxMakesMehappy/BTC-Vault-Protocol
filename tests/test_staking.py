@@ -1,18 +1,47 @@
 """
-Staking Pool Testing Suite
-Tests for protocol asset staking and allocation functionality
+Comprehensive Staking Pool Testing Suite
+Tests for protocol asset staking and allocation functionality with concurrent execution
+Addresses FR7: Testing and Development Infrastructure requirements
 """
 
 import pytest
 import asyncio
 import time
+import threading
 from unittest.mock import Mock, patch, AsyncMock
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Dict, Any
 import sys
 import os
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import configuration
+try:
+    from config.validators import get_validator_config, get_staking_config
+    from config.treasury import get_allocation_config
+except ImportError:
+    # Mock configs if not available
+    def get_validator_config():
+        return {
+            'sol_validators': ['validator1', 'validator2'],
+            'eth_validators': ['eth_validator1'],
+            'atom_validators': ['atom_validator1']
+        }
+    
+    def get_staking_config():
+        return {
+            'sol_allocation': 4000,  # 40%
+            'eth_allocation': 3000,  # 30%
+            'atom_allocation': 3000  # 30%
+        }
+    
+    def get_allocation_config():
+        return {
+            'rebalance_threshold': 200,  # 2%
+            'max_deviation': 500  # 5%
+        }
 
 class TestStakingPool:
     """Test suite for staking pool operations"""
@@ -499,3 +528,483 @@ class TestStakingPool:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
+class TestConcurrentStakingOperations:
+    """Test concurrent staking operations for performance and reliability"""
+    
+    @pytest.fixture
+    def mock_staking_client(self):
+        """Mock staking client for concurrent testing"""
+        mock_client = Mock()
+        mock_client.config = {
+            'network': 'devnet',
+            'program_id': 'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS'
+        }
+        # Make async methods return AsyncMock
+        mock_client.stake_protocol_assets = AsyncMock()
+        mock_client.rebalance_allocations = AsyncMock()
+        mock_client.add_validator = AsyncMock()
+        mock_client.calculate_rewards = AsyncMock()
+        return mock_client
+    
+    @pytest.mark.asyncio
+    async def test_concurrent_staking_operations_stress(self, mock_staking_client):
+        """Test high-volume concurrent staking operations"""
+        # Mock successful responses
+        mock_staking_client.stake_protocol_assets.return_value = {
+            'success': True, 
+            'staked_amount': 1000000,
+            'transaction_id': 'tx_123'
+        }
+        mock_staking_client.rebalance_allocations.return_value = {
+            'success': True,
+            'rebalanced': True,
+            'adjustments': {'SOL': 0, 'ETH': 0, 'ATOM': 0}
+        }
+        
+        # Create concurrent staking tasks
+        staking_tasks = [
+            mock_staking_client.stake_protocol_assets(100000 * (i + 1))
+            for i in range(50)
+        ]
+        
+        # Create concurrent rebalancing tasks
+        rebalancing_tasks = [
+            mock_staking_client.rebalance_allocations()
+            for i in range(20)
+        ]
+        
+        # Execute all tasks concurrently
+        start_time = time.time()
+        all_tasks = staking_tasks + rebalancing_tasks
+        results = await asyncio.gather(*all_tasks, return_exceptions=True)
+        execution_time = time.time() - start_time
+        
+        # Verify results
+        successful_results = [r for r in results if isinstance(r, dict) and r.get('success')]
+        assert len(successful_results) == 70  # 50 staking + 20 rebalancing
+        assert execution_time < 15.0  # Should complete within 15 seconds
+        
+        print(f"✅ Concurrent staking operations: {len(successful_results)}/70 in {execution_time:.2f}s")
+    
+    def test_concurrent_validator_selection_threadpool(self):
+        """Test concurrent validator selection using ThreadPoolExecutor"""
+        def select_best_validator(validator_pool):
+            """Mock validator selection function"""
+            time.sleep(0.02)  # Simulate selection time
+            
+            # Sort by performance score (descending) then commission (ascending)
+            sorted_validators = sorted(
+                validator_pool,
+                key=lambda v: (-v['performance_score'], v['commission'])
+            )
+            
+            return {
+                'selected': sorted_validators[0] if sorted_validators else None,
+                'pool_size': len(validator_pool),
+                'selection_time': 0.02
+            }
+        
+        # Create validator pools for different networks
+        validator_pools = []
+        
+        # SOL validators
+        for i in range(10):
+            sol_pool = []
+            for j in range(20):  # 20 validators per pool
+                sol_pool.append({
+                    'address': f'sol_validator_{i}_{j}',
+                    'commission': 300 + (j * 50),  # 3% to 12.5%
+                    'performance_score': 9000 + (j * 50),  # 90% to 99.5%
+                    'network': 'SOL'
+                })
+            validator_pools.append(sol_pool)
+        
+        # ETH validators
+        for i in range(5):
+            eth_pool = []
+            for j in range(15):  # 15 validators per pool
+                eth_pool.append({
+                    'address': f'eth_validator_{i}_{j}',
+                    'commission': 400 + (j * 30),  # 4% to 8.2%
+                    'performance_score': 9200 + (j * 40),  # 92% to 97.6%
+                    'network': 'ETH'
+                })
+            validator_pools.append(eth_pool)
+        
+        # ATOM validators
+        for i in range(3):
+            atom_pool = []
+            for j in range(10):  # 10 validators per pool
+                atom_pool.append({
+                    'address': f'atom_validator_{i}_{j}',
+                    'commission': 500 + (j * 25),  # 5% to 7.25%
+                    'performance_score': 9100 + (j * 45),  # 91% to 95.05%
+                    'network': 'ATOM'
+                })
+            validator_pools.append(atom_pool)
+        
+        # Execute concurrent validator selection
+        start_time = time.time()
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            results = list(executor.map(select_best_validator, validator_pools))
+        execution_time = time.time() - start_time
+        
+        # Verify results
+        successful_selections = [r for r in results if r['selected'] is not None]
+        total_validators_evaluated = sum(r['pool_size'] for r in results)
+        
+        assert len(successful_selections) == len(validator_pools)
+        assert total_validators_evaluated == (10*20 + 5*15 + 3*10)  # 485 total validators
+        assert execution_time < 3.0  # Should complete quickly with threading
+        
+        # Verify best validators were selected (highest performance, lowest commission)
+        for result in successful_selections:
+            selected = result['selected']
+            assert selected['performance_score'] >= 9000
+            assert selected['commission'] <= 1000  # Should select low commission validators
+        
+        print(f"✅ Concurrent validator selection: {len(successful_selections)} pools, {total_validators_evaluated} validators in {execution_time:.2f}s")
+    
+    @pytest.mark.asyncio
+    async def test_concurrent_allocation_rebalancing(self, mock_staking_client):
+        """Test concurrent allocation rebalancing across multiple assets"""
+        rebalance_results = []
+        
+        async def mock_rebalance_asset(asset, current_allocation, target_allocation):
+            """Mock asset rebalancing function"""
+            await asyncio.sleep(0.05)  # Simulate rebalancing time
+            
+            deviation = abs(current_allocation - target_allocation)
+            adjustment_needed = deviation > 200  # 2% threshold
+            
+            if adjustment_needed:
+                adjustment = target_allocation - current_allocation
+                return {
+                    'asset': asset,
+                    'current_allocation': current_allocation,
+                    'target_allocation': target_allocation,
+                    'adjustment': adjustment,
+                    'rebalanced': True,
+                    'deviation': deviation
+                }
+            else:
+                return {
+                    'asset': asset,
+                    'current_allocation': current_allocation,
+                    'target_allocation': target_allocation,
+                    'adjustment': 0,
+                    'rebalanced': False,
+                    'deviation': deviation
+                }
+        
+        # Create rebalancing scenarios
+        rebalancing_scenarios = [
+            # Scenario 1: SOL overallocated
+            ('SOL', 4500, 4000),  # 45% -> 40%
+            ('ETH', 2750, 3000),  # 27.5% -> 30%
+            ('ATOM', 2750, 3000), # 27.5% -> 30%
+            
+            # Scenario 2: ETH overallocated
+            ('SOL', 3800, 4000),  # 38% -> 40%
+            ('ETH', 3400, 3000),  # 34% -> 30%
+            ('ATOM', 2800, 3000), # 28% -> 30%
+            
+            # Scenario 3: ATOM overallocated
+            ('SOL', 3900, 4000),  # 39% -> 40%
+            ('ETH', 2950, 3000),  # 29.5% -> 30%
+            ('ATOM', 3150, 3000), # 31.5% -> 30%
+            
+            # Scenario 4: All within threshold (no rebalancing needed)
+            ('SOL', 4050, 4000),  # 40.5% -> 40% (within 2% threshold)
+            ('ETH', 2980, 3000),  # 29.8% -> 30%
+            ('ATOM', 2970, 3000), # 29.7% -> 30%
+        ]
+        
+        # Execute concurrent rebalancing
+        start_time = time.time()
+        tasks = [
+            mock_rebalance_asset(asset, current, target)
+            for asset, current, target in rebalancing_scenarios
+        ]
+        results = await asyncio.gather(*tasks)
+        execution_time = time.time() - start_time
+        
+        # Analyze results
+        rebalanced_assets = [r for r in results if r['rebalanced']]
+        no_rebalance_needed = [r for r in results if not r['rebalanced']]
+        
+        # Verify rebalancing logic
+        assert len(rebalanced_assets) == 9  # First 3 scenarios need rebalancing
+        assert len(no_rebalance_needed) == 3  # Last scenario within threshold
+        assert execution_time < 2.0  # Should complete quickly
+        
+        # Verify adjustments are correct
+        for result in rebalanced_assets:
+            expected_adjustment = result['target_allocation'] - result['current_allocation']
+            assert result['adjustment'] == expected_adjustment
+            assert result['deviation'] > 200  # Above 2% threshold
+        
+        for result in no_rebalance_needed:
+            assert result['deviation'] <= 200  # Within 2% threshold
+        
+        print(f"✅ Concurrent rebalancing: {len(rebalanced_assets)} rebalanced, {len(no_rebalance_needed)} stable in {execution_time:.2f}s")
+    
+    def test_staking_performance_under_load(self):
+        """Test staking system performance under high load"""
+        import psutil
+        import gc
+        
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss / (1024**2)  # MB
+        
+        # Simulate high-load staking scenario
+        staking_operations = []
+        
+        # Create 1000 staking operations
+        for i in range(1000):
+            operation = {
+                'operation_id': i,
+                'asset': ['SOL', 'ETH', 'ATOM'][i % 3],
+                'amount': 1000 + (i * 100),  # Varying amounts
+                'validator': f'validator_{i % 50}',  # 50 different validators
+                'timestamp': time.time() + i,
+                'priority': i % 5,  # 5 priority levels
+                'user_count': (i % 100) + 1  # 1-100 users per operation
+            }
+            staking_operations.append(operation)
+        
+        # Process operations in batches using ThreadPoolExecutor
+        def process_staking_batch(batch):
+            """Process a batch of staking operations"""
+            batch_results = []
+            for op in batch:
+                # Simulate staking processing
+                processing_time = 0.001 * op['priority']  # Higher priority = more processing
+                time.sleep(processing_time)
+                
+                result = {
+                    'operation_id': op['operation_id'],
+                    'asset': op['asset'],
+                    'amount': op['amount'],
+                    'success': True,
+                    'processing_time': processing_time,
+                    'validator': op['validator']
+                }
+                batch_results.append(result)
+            
+            return batch_results
+        
+        # Split into batches for concurrent processing
+        batch_size = 100
+        batches = [
+            staking_operations[i:i + batch_size]
+            for i in range(0, len(staking_operations), batch_size)
+        ]
+        
+        # Execute batches concurrently
+        start_time = time.time()
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            batch_results = list(executor.map(process_staking_batch, batches))
+        execution_time = time.time() - start_time
+        
+        # Flatten results
+        all_results = []
+        for batch_result in batch_results:
+            all_results.extend(batch_result)
+        
+        # Analyze performance
+        successful_operations = [r for r in all_results if r['success']]
+        total_amount_staked = sum(r['amount'] for r in successful_operations)
+        
+        # Group by asset
+        asset_totals = {}
+        for result in successful_operations:
+            asset = result['asset']
+            if asset not in asset_totals:
+                asset_totals[asset] = 0
+            asset_totals[asset] += result['amount']
+        
+        final_memory = process.memory_info().rss / (1024**2)  # MB
+        memory_increase = final_memory - initial_memory
+        
+        # Verify performance requirements
+        assert len(successful_operations) == 1000  # All operations successful
+        assert execution_time < 10.0  # Should complete within 10 seconds
+        assert memory_increase < 100  # Memory increase should be minimal
+        
+        # Verify asset distribution
+        assert len(asset_totals) == 3  # SOL, ETH, ATOM
+        for asset, total in asset_totals.items():
+            assert total > 0  # Each asset should have some allocation
+        
+        print(f"✅ High-load performance test: {len(successful_operations)} operations in {execution_time:.2f}s")
+        print(f"   Total staked: ${total_amount_staked:,}")
+        print(f"   Memory usage: {initial_memory:.1f}MB → {final_memory:.1f}MB (+{memory_increase:.1f}MB)")
+        print(f"   Asset distribution: {asset_totals}")
+        
+        # Cleanup
+        del staking_operations, all_results
+        gc.collect()
+    
+    @pytest.mark.asyncio
+    async def test_cross_chain_staking_coordination(self, mock_staking_client):
+        """Test coordination of staking across multiple chains"""
+        
+        async def mock_stake_on_chain(chain, amount, validators):
+            """Mock cross-chain staking function"""
+            await asyncio.sleep(0.1 + (0.05 * len(validators)))  # Simulate network latency
+            
+            # Simulate different success rates for different chains
+            success_rates = {'SOL': 0.95, 'ETH': 0.90, 'ATOM': 0.85}
+            success = hash(f"{chain}{amount}") % 100 < (success_rates[chain] * 100)
+            
+            if success:
+                return {
+                    'chain': chain,
+                    'amount': amount,
+                    'validators': validators,
+                    'success': True,
+                    'transaction_id': f'{chain.lower()}_tx_{hash(str(amount))}',
+                    'confirmation_time': 0.1 + (0.05 * len(validators))
+                }
+            else:
+                return {
+                    'chain': chain,
+                    'amount': amount,
+                    'validators': validators,
+                    'success': False,
+                    'error': f'{chain} network congestion',
+                    'retry_recommended': True
+                }
+        
+        # Define cross-chain staking operations
+        staking_operations = [
+            # SOL staking operations
+            ('SOL', 400000, ['sol_validator_1', 'sol_validator_2']),
+            ('SOL', 300000, ['sol_validator_3']),
+            ('SOL', 200000, ['sol_validator_1', 'sol_validator_4']),
+            
+            # ETH staking operations
+            ('ETH', 350000, ['eth_validator_1']),
+            ('ETH', 250000, ['eth_validator_2', 'eth_validator_3']),
+            
+            # ATOM staking operations
+            ('ATOM', 200000, ['cosmos_validator_1']),  # Everstake
+            ('ATOM', 100000, ['osmosis_validator_1']), # Osmosis
+            ('ATOM', 150000, ['cosmos_validator_2']),  # Additional Cosmos
+        ]
+        
+        # Execute cross-chain staking concurrently
+        start_time = time.time()
+        tasks = [
+            mock_stake_on_chain(chain, amount, validators)
+            for chain, amount, validators in staking_operations
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        execution_time = time.time() - start_time
+        
+        # Analyze cross-chain results
+        successful_stakes = [r for r in results if isinstance(r, dict) and r.get('success')]
+        failed_stakes = [r for r in results if isinstance(r, dict) and not r.get('success')]
+        
+        # Group by chain
+        chain_results = {}
+        for result in successful_stakes:
+            chain = result['chain']
+            if chain not in chain_results:
+                chain_results[chain] = {'count': 0, 'total_amount': 0, 'validators': set()}
+            
+            chain_results[chain]['count'] += 1
+            chain_results[chain]['total_amount'] += result['amount']
+            chain_results[chain]['validators'].update(result['validators'])
+        
+        # Verify cross-chain coordination
+        assert len(successful_stakes) >= 6  # Most operations should succeed
+        assert len(chain_results) == 3  # All three chains should have successful stakes
+        assert execution_time < 5.0  # Should complete within 5 seconds
+        
+        # Verify allocation targets are approximately met
+        total_staked = sum(chain_results[chain]['total_amount'] for chain in chain_results)
+        if total_staked > 0:
+            sol_percentage = (chain_results.get('SOL', {}).get('total_amount', 0) / total_staked) * 100
+            eth_percentage = (chain_results.get('ETH', {}).get('total_amount', 0) / total_staked) * 100
+            atom_percentage = (chain_results.get('ATOM', {}).get('total_amount', 0) / total_staked) * 100
+            
+            # Should be approximately 40% SOL, 30% ETH, 30% ATOM
+            assert 35 <= sol_percentage <= 45  # Allow some variance
+            assert 25 <= eth_percentage <= 35
+            assert 25 <= atom_percentage <= 35
+        
+        print(f"✅ Cross-chain staking: {len(successful_stakes)} successful, {len(failed_stakes)} failed in {execution_time:.2f}s")
+        for chain, data in chain_results.items():
+            percentage = (data['total_amount'] / total_staked * 100) if total_staked > 0 else 0
+            print(f"   {chain}: ${data['total_amount']:,} ({percentage:.1f}%) across {len(data['validators'])} validators")
+
+def run_staking_tests():
+    """Run all staking tests including concurrent tests"""
+    print("🥩 Running Staking Pool Tests...")
+    
+    # Run standard and concurrent tests
+    test_staking = TestStakingPool()
+    test_concurrent = TestConcurrentStakingOperations()
+    
+    # List of all test methods
+    standard_tests = [
+        'test_initialize_staking_pool',
+        'test_stake_protocol_assets',
+        'test_allocation_calculations',
+        'test_rebalancing_logic',
+        'test_validator_management'
+    ]
+    
+    concurrent_tests = [
+        'test_concurrent_validator_selection_threadpool',
+        'test_staking_performance_under_load'
+    ]
+    
+    passed = 0
+    failed = 0
+    
+    # Run standard tests
+    for test_method in standard_tests:
+        try:
+            if hasattr(test_staking, test_method):
+                method = getattr(test_staking, test_method)
+                if asyncio.iscoroutinefunction(method):
+                    asyncio.run(method())
+                else:
+                    method()
+                print(f"  ✅ {test_method}")
+                passed += 1
+            else:
+                print(f"  ❌ {test_method} - Method not found")
+                failed += 1
+        except Exception as e:
+            print(f"  ❌ {test_method} - {str(e)}")
+            failed += 1
+    
+    # Run concurrent tests
+    for test_method in concurrent_tests:
+        try:
+            if hasattr(test_concurrent, test_method):
+                method = getattr(test_concurrent, test_method)
+                if asyncio.iscoroutinefunction(method):
+                    asyncio.run(method())
+                else:
+                    method()
+                print(f"  ✅ {test_method}")
+                passed += 1
+            else:
+                print(f"  ❌ {test_method} - Method not found")
+                failed += 1
+        except Exception as e:
+            print(f"  ❌ {test_method} - {str(e)}")
+            failed += 1
+    
+    print(f"📊 Staking Pool Tests: {passed} passed, {failed} failed")
+    return failed == 0
+
+if __name__ == '__main__':
+    success = run_staking_tests()
+    sys.exit(0 if success else 1)

@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 """
-Comprehensive test suite for KYC and Compliance system
+Comprehensive KYC and Compliance Testing Suite
 Tests all compliance features including KYC verification, AML screening, and transaction validation
+Addresses FR7: Testing and Development Infrastructure requirements
 """
 
+import pytest
+import asyncio
 import json
 import hashlib
 import time
+import threading
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch, AsyncMock
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Dict, Any
+import sys
+import os
+
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Mock Solana classes for testing
 class MockKeypair:
@@ -21,7 +33,7 @@ class MockPublicKey:
 class TestKYCCompliance:
     """Test suite for KYC and Compliance functionality"""
     
-    def setup_compliance_system(self):
+    async def setup_compliance_system(self):
         """Setup compliance system for testing"""
         # Initialize test accounts
         self.compliance_authority = MockKeypair()
@@ -48,9 +60,10 @@ class TestKYCCompliance:
             "config": self.test_config
         }
     
-    def test_initialize_compliance_system(self):
+    @pytest.mark.asyncio
+    async def test_initialize_compliance_system(self):
         """Test 1: Initialize global compliance configuration"""
-        setup = self.setup_compliance_system()
+        setup = await self.setup_compliance_system()
         
         # Test compliance system initialization
         result = await self.initialize_compliance_config(

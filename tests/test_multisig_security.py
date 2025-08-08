@@ -1,17 +1,25 @@
 """
-Comprehensive tests for multisig security system with HSM integration.
-Tests 2-of-3 multisig, HSM attestation, emergency procedures, and security policies.
+Comprehensive Multisig Security Testing Suite
+Tests for multisig security system with HSM integration and concurrent execution
+Tests 2-of-3 multisig, HSM attestation, emergency procedures, and security policies
+Addresses FR7: Testing and Development Infrastructure requirements
 """
 
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import json
 import hashlib
+import threading
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
+import sys
+import os
+
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 @dataclass
 class MockHsmConfig:

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Treasury Management System Tests
+Comprehensive Treasury Management Testing Suite
 
 This module contains comprehensive tests for the advanced treasury management system,
-including yield farming strategies, liquidity management, and governance features.
+including yield farming strategies, liquidity management, and governance features
+Addresses FR7: Testing and Development Infrastructure requirements
 """
 
 import pytest
@@ -11,8 +12,38 @@ import asyncio
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from unittest.mock import Mock, patch, AsyncMock
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import time
+import threading
+import sys
+import os
+
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import configuration
+try:
+    from config.treasury import get_treasury_config, get_deposit_config
+except ImportError:
+    # Mock configs if not available
+    def get_treasury_config():
+        return {
+            'biweekly_deposit': 50_000_000,  # $50 in micro-dollars
+            'deposit_frequency': 1209600,  # 14 days in seconds
+            'min_balance_threshold': 10_000_000  # $10 minimum
+        }
+    
+    def get_deposit_config():
+        return {
+            'auto_convert': True,
+            'allocation_percentages': {
+                'SOL': 4000,  # 40%
+                'ETH': 3000,  # 30%
+                'ATOM': 3000  # 30%
+            }
+        }
 
 class StrategyType(Enum):
     LIQUIDITY_PROVISION = "LiquidityProvision"

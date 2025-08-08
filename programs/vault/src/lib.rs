@@ -3,6 +3,8 @@ use anchor_lang::prelude::*;
 pub mod instructions;
 pub mod state;
 pub mod errors;
+pub mod crypto;
+pub mod monitoring;
 pub mod traits;
 
 use instructions::btc_commitment::*;
@@ -16,10 +18,12 @@ use instructions::payment::*;
 use instructions::kyc::*;
 use instructions::authentication::*;
 use instructions::treasury_management::*;
+use instructions::security_monitoring::*;
 use crate::traits::PaymentType;
 use crate::state::{StateChannelUpdate, RewardCalculation, SignerInfo, TransactionType, TransactionPriority, SignatureType, PaymentMethod, LightningConfig, UsdcConfig, ReinvestmentConfig};
 use crate::state::kyc_compliance::{KYCStatus, ComplianceRegion, KYCVerification, AMLScreening};
 use crate::state::authentication::{AuthMethod, SessionStatus, SecurityEventType};
+use crate::state::security_monitoring::{SecurityEventType as MonitoringEventType, SecurityLevel, AlertStatus};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -662,5 +666,96 @@ pub mod vault {
         operations: Vec<crate::state::enhanced_state_channel::HFTOperation>,
     ) -> Result<()> {
         instructions::enhanced_state_channel::BatchProcessOperations::process(ctx, operations)
+    }
+
+    // Security monitoring instructions
+    pub fn initialize_security_monitor(
+        ctx: Context<InitializeSecurityMonitor>,
+    ) -> Result<()> {
+        instructions::security_monitoring::initialize_security_monitor(ctx)
+    }
+
+    pub fn log_security_event(
+        ctx: Context<LogSecurityEvent>,
+        event_type: MonitoringEventType,
+        user: Option<Pubkey>,
+        details: String,
+        ip_address: Option<String>,
+        user_agent: Option<String>,
+        device_id: Option<String>,
+        session_id: Option<String>,
+        transaction_id: Option<String>,
+        amount: Option<u64>,
+        metadata: std::collections::HashMap<String, String>,
+    ) -> Result<()> {
+        instructions::security_monitoring::log_security_event(
+            ctx, event_type, user, details, ip_address, user_agent, 
+            device_id, session_id, transaction_id, amount, metadata
+        )
+    }
+
+    pub fn create_audit_trail(
+        ctx: Context<CreateAuditTrail>,
+        user: Option<Pubkey>,
+        action: String,
+        resource: String,
+        success: bool,
+        ip_address: Option<String>,
+        user_agent: Option<String>,
+        session_id: Option<String>,
+        before_state: Option<String>,
+        after_state: Option<String>,
+        error_message: Option<String>,
+        compliance_relevant: bool,
+    ) -> Result<()> {
+        instructions::security_monitoring::create_audit_trail(
+            ctx, user, action, resource, success, ip_address, user_agent,
+            session_id, before_state, after_state, error_message, compliance_relevant
+        )
+    }
+
+    pub fn resolve_security_alert(
+        ctx: Context<ManageSecurityAlert>,
+        alert_id: u64,
+        false_positive: bool,
+        resolution_notes: String,
+    ) -> Result<()> {
+        instructions::security_monitoring::resolve_security_alert(ctx, alert_id, false_positive, resolution_notes)
+    }
+
+    pub fn assign_security_alert(
+        ctx: Context<ManageSecurityAlert>,
+        alert_id: u64,
+        officer: Pubkey,
+    ) -> Result<()> {
+        instructions::security_monitoring::assign_security_alert(ctx, alert_id, officer)
+    }
+
+    pub fn add_anomaly_rule(
+        ctx: Context<UpdateAnomalyRules>,
+        name: String,
+        description: String,
+        event_types: Vec<MonitoringEventType>,
+        threshold_value: f64,
+        time_window_minutes: u32,
+        severity: SecurityLevel,
+        auto_block: bool,
+    ) -> Result<()> {
+        instructions::security_monitoring::add_anomaly_rule(
+            ctx, name, description, event_types, threshold_value, 
+            time_window_minutes, severity, auto_block
+        )
+    }
+
+    pub fn update_security_config(
+        ctx: Context<UpdateAnomalyRules>,
+        retention_days: Option<u32>,
+        max_events_per_user: Option<u32>,
+        auto_block_enabled: Option<bool>,
+        notification_webhook: Option<String>,
+    ) -> Result<()> {
+        instructions::security_monitoring::update_security_config(
+            ctx, retention_days, max_events_per_user, auto_block_enabled, notification_webhook
+        )
     }
 }

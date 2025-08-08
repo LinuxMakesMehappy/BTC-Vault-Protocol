@@ -294,4 +294,51 @@ pub enum VaultError {
     
     #[msg("Treasury emergency mode active")]
     TreasuryEmergencyMode,
+    
+    // Security monitoring errors
+    #[msg("Security monitoring disabled")]
+    SecurityMonitoringDisabled,
+    
+    #[msg("Event log full")]
+    EventLogFull,
+    
+    #[msg("Alert not found")]
+    AlertNotFound,
+    
+    #[msg("Invalid security level")]
+    InvalidSecurityLevel,
+    
+    #[msg("Anomaly rule not found")]
+    AnomalyRuleNotFound,
+    
+    #[msg("User behavior profile not found")]
+    UserBehaviorProfileNotFound,
+    
+    #[msg("Security event not found")]
+    SecurityEventNotFound,
+    
+    #[msg("Audit trail not found")]
+    AuditTrailNotFound,
+    
+    #[msg("Invalid time window")]
+    InvalidTimeWindow,
+    
+    #[msg("Invalid threshold value")]
+    InvalidThresholdValue,
+    
+    #[msg("Security alert queue full")]
+    SecurityAlertQueueFull,
+    
+    #[msg("Unauthorized security officer")]
+    UnauthorizedSecurityOfficer,
+    
+    // Arithmetic and overflow errors
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
+    
+    #[msg("Division by zero")]
+    DivisionByZero,
+    
+    #[msg("Clock unavailable")]
+    ClockUnavailable,
 }

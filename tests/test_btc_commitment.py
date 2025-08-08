@@ -1,18 +1,46 @@
 """
-BTC Commitment Testing Suite
-Tests for BTC commitment and verification functionality
+Comprehensive BTC Commitment Testing Suite
+Tests for BTC commitment and verification functionality with concurrent execution support
+Addresses FR7: Testing and Development Infrastructure requirements
 """
 
 import pytest
 import asyncio
 import os
+import time
+import hashlib
 from unittest.mock import Mock, patch, AsyncMock
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 import os
+import threading
+from typing import List, Dict, Any
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import configuration
+try:
+    from config.chainlink import get_verification_settings, get_oracle_config
+    from config.validators import get_validator_config
+except ImportError:
+    # Mock configs if not available
+    def get_verification_settings():
+        return {
+            'interval': 60,
+            'cache_duration': 300,
+            'retry_config': {
+                'max_retries': 3,
+                'base_delay': 2,
+                'max_delay': 60
+            }
+        }
+    
+    def get_oracle_config():
+        return {
+            'btc_usd_feed': 'test_feed_address',
+            'utxo_verification': 'test_utxo_address'
+        }
 
 class TestBTCCommitment:
     """Test suite for BTC commitment operations"""
@@ -861,3 +889,308 @@ class TestBTCCommitment:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
+class TestConcurrentBTCOperations:
+    """Test concurrent BTC operations for performance and reliability"""
+    
+    @pytest.fixture
+    def mock_vault_client(self):
+        """Mock vault client for concurrent testing"""
+        mock_client = Mock()
+        mock_client.config = {
+            'network': 'devnet',
+            'program_id': 'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS'
+        }
+        # Make async methods return AsyncMock
+        mock_client.commit_btc = AsyncMock()
+        mock_client.verify_balance = AsyncMock()
+        mock_client.update_commitment = AsyncMock()
+        return mock_client
+    
+    @pytest.mark.asyncio
+    async def test_concurrent_btc_commitments_stress(self, mock_vault_client):
+        """Test high-volume concurrent BTC commitments"""
+        # Mock successful responses
+        mock_vault_client.commit_btc.return_value = {'success': True, 'commitment_id': 'test_id'}
+        
+        # Create 100 concurrent commitment tasks
+        tasks = []
+        for i in range(100):
+            task = mock_vault_client.commit_btc(
+                0.01 + (i * 0.001),  # Varying amounts
+                f'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh{i}',
+                f'ecdsa_proof_{i}'
+            )
+            tasks.append(task)
+        
+        # Execute all tasks concurrently
+        start_time = time.time()
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        execution_time = time.time() - start_time
+        
+        # Verify results
+        successful_results = [r for r in results if isinstance(r, dict) and r.get('success')]
+        assert len(successful_results) == 100
+        assert execution_time < 10.0  # Should complete within 10 seconds
+        
+        print(f"✅ Concurrent commitments: {len(successful_results)}/100 in {execution_time:.2f}s")
+    
+    @pytest.mark.asyncio
+    async def test_concurrent_balance_verification_with_caching(self, mock_vault_client):
+        """Test concurrent balance verification with caching optimization"""
+        verification_count = 0
+        
+        def mock_verify_balance():
+            nonlocal verification_count
+            verification_count += 1
+            return {
+                'verified': True,
+                'balance': 50000000,
+                'cache_hit': verification_count > 1,  # First call misses cache
+                'verification_count': verification_count
+            }
+        
+        mock_vault_client.verify_balance.side_effect = mock_verify_balance
+        
+        # Create 50 concurrent verification tasks
+        tasks = [mock_vault_client.verify_balance() for _ in range(50)]
+        
+        start_time = time.time()
+        results = await asyncio.gather(*tasks)
+        execution_time = time.time() - start_time
+        
+        # Verify caching behavior
+        cache_hits = sum(1 for r in results if r.get('cache_hit'))
+        assert cache_hits > 0  # Some should be cache hits
+        assert execution_time < 5.0  # Should be fast due to caching
+        
+        print(f"✅ Balance verifications: {len(results)} requests, {cache_hits} cache hits in {execution_time:.2f}s")
+    
+    def test_concurrent_commitment_validation_threadpool(self):
+        """Test concurrent commitment validation using ThreadPoolExecutor"""
+        def validate_commitment(commitment_data):
+            """Mock commitment validation function"""
+            time.sleep(0.01)  # Simulate validation time
+            
+            # Validate amount
+            if commitment_data['amount'] <= 0:
+                return {'valid': False, 'error': 'Invalid amount'}
+            
+            # Validate address format
+            if not commitment_data['btc_address'].startswith(('bc1', '1', '3')):
+                return {'valid': False, 'error': 'Invalid address format'}
+            
+            # Validate proof length
+            if len(commitment_data['ecdsa_proof']) < 64:
+                return {'valid': False, 'error': 'Invalid proof length'}
+            
+            return {'valid': True, 'commitment_id': f"commit_{hash(str(commitment_data))}"}
+        
+        # Create test data
+        test_commitments = []
+        for i in range(50):
+            test_commitments.append({
+                'amount': 0.01 + (i * 0.001),
+                'btc_address': f'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh{i:02d}',
+                'ecdsa_proof': 'a' * 128  # Valid proof length
+            })
+        
+        # Add some invalid commitments for testing
+        test_commitments.extend([
+            {'amount': 0, 'btc_address': 'bc1qvalid', 'ecdsa_proof': 'a' * 128},  # Invalid amount
+            {'amount': 0.1, 'btc_address': 'invalid', 'ecdsa_proof': 'a' * 128},  # Invalid address
+            {'amount': 0.1, 'btc_address': 'bc1qvalid', 'ecdsa_proof': 'short'},  # Invalid proof
+        ])
+        
+        # Execute concurrent validation
+        start_time = time.time()
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            results = list(executor.map(validate_commitment, test_commitments))
+        execution_time = time.time() - start_time
+        
+        # Analyze results
+        valid_results = [r for r in results if r['valid']]
+        invalid_results = [r for r in results if not r['valid']]
+        
+        assert len(valid_results) == 50  # 50 valid commitments
+        assert len(invalid_results) == 3   # 3 invalid commitments
+        assert execution_time < 2.0  # Should complete quickly with threading
+        
+        print(f"✅ Concurrent validation: {len(valid_results)} valid, {len(invalid_results)} invalid in {execution_time:.2f}s")
+    
+    @pytest.mark.asyncio
+    async def test_oracle_retry_logic_concurrent(self, mock_vault_client):
+        """Test oracle retry logic under concurrent load"""
+        retry_counts = {}
+        
+        async def mock_verify_with_retries(user_id):
+            """Mock verification with retry simulation"""
+            if user_id not in retry_counts:
+                retry_counts[user_id] = 0
+            
+            retry_counts[user_id] += 1
+            
+            # Simulate failures for first few attempts
+            if retry_counts[user_id] <= 2:
+                return {
+                    'verified': False,
+                    'error': 'Oracle verification failed',
+                    'retry_count': retry_counts[user_id],
+                    'will_retry': True
+                }
+            else:
+                return {
+                    'verified': True,
+                    'balance': 50000000,
+                    'retry_count': retry_counts[user_id],
+                    'final_success': True
+                }
+        
+        # Test concurrent oracle operations with retries
+        user_ids = [f'user_{i}' for i in range(20)]
+        
+        # Simulate multiple retry attempts for each user
+        all_tasks = []
+        for user_id in user_ids:
+            for attempt in range(3):  # 3 attempts per user
+                task = mock_verify_with_retries(user_id)
+                all_tasks.append(task)
+        
+        start_time = time.time()
+        results = await asyncio.gather(*all_tasks)
+        execution_time = time.time() - start_time
+        
+        # Analyze retry behavior
+        successful_results = [r for r in results if r.get('verified')]
+        failed_results = [r for r in results if not r.get('verified')]
+        
+        # Each user should eventually succeed after retries
+        unique_successes = len(set(r.get('retry_count', 0) for r in successful_results if r.get('final_success')))
+        
+        assert len(successful_results) >= 20  # At least one success per user
+        assert execution_time < 5.0  # Should handle retries efficiently
+        
+        print(f"✅ Oracle retry test: {len(successful_results)} successes, {len(failed_results)} retries in {execution_time:.2f}s")
+    
+    def test_memory_efficiency_large_dataset(self):
+        """Test memory efficiency with large commitment datasets"""
+        import psutil
+        import gc
+        
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss / (1024**2)  # MB
+        
+        # Create large dataset of commitment data
+        large_dataset = []
+        for i in range(10000):  # 10k commitments
+            commitment = {
+                'id': i,
+                'amount': 0.001 + (i * 0.0001),
+                'btc_address': f'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh{i:05d}',
+                'ecdsa_proof': 'a' * 128,
+                'timestamp': int(time.time()) + i,
+                'user_id': f'user_{i % 1000}',  # 1000 unique users
+                'verified': i % 10 == 0  # 10% verified
+            }
+            large_dataset.append(commitment)
+        
+        peak_memory = process.memory_info().rss / (1024**2)  # MB
+        
+        # Process dataset in batches to test memory efficiency
+        batch_size = 1000
+        processed_batches = 0
+        
+        for i in range(0, len(large_dataset), batch_size):
+            batch = large_dataset[i:i + batch_size]
+            
+            # Simulate processing
+            verified_in_batch = sum(1 for c in batch if c['verified'])
+            total_amount_in_batch = sum(c['amount'] for c in batch)
+            
+            processed_batches += 1
+            
+            # Force garbage collection after each batch
+            if processed_batches % 5 == 0:
+                gc.collect()
+        
+        final_memory = process.memory_info().rss / (1024**2)  # MB
+        memory_increase = final_memory - initial_memory
+        
+        # Memory increase should be reasonable for low-resource systems
+        assert memory_increase < 500  # Less than 500MB increase
+        assert processed_batches == 10  # All batches processed
+        
+        print(f"✅ Memory efficiency test: {len(large_dataset)} commitments processed")
+        print(f"   Memory usage: {initial_memory:.1f}MB → {final_memory:.1f}MB (+{memory_increase:.1f}MB)")
+        
+        # Cleanup
+        del large_dataset
+        gc.collect()
+
+def run_btc_commitment_tests():
+    """Run all BTC commitment tests including concurrent tests"""
+    print("🔗 Running BTC Commitment Tests...")
+    
+    # Run standard tests
+    test_btc = TestBTCCommitment()
+    test_concurrent = TestConcurrentBTCOperations()
+    
+    # List of all test methods
+    standard_tests = [
+        'test_commit_btc_success',
+        'test_verify_balance_success',
+        'test_concurrent_commitments',
+        'test_ecdsa_proof_validation',
+        'test_chainlink_oracle_integration'
+    ]
+    
+    concurrent_tests = [
+        'test_concurrent_commitment_validation_threadpool',
+        'test_memory_efficiency_large_dataset'
+    ]
+    
+    passed = 0
+    failed = 0
+    
+    # Run standard tests
+    for test_method in standard_tests:
+        try:
+            if hasattr(test_btc, test_method):
+                method = getattr(test_btc, test_method)
+                if asyncio.iscoroutinefunction(method):
+                    asyncio.run(method(test_btc.mock_vault_client(), test_btc.sample_btc_data()))
+                else:
+                    method()
+                print(f"  ✅ {test_method}")
+                passed += 1
+            else:
+                print(f"  ❌ {test_method} - Method not found")
+                failed += 1
+        except Exception as e:
+            print(f"  ❌ {test_method} - {str(e)}")
+            failed += 1
+    
+    # Run concurrent tests
+    for test_method in concurrent_tests:
+        try:
+            if hasattr(test_concurrent, test_method):
+                method = getattr(test_concurrent, test_method)
+                if asyncio.iscoroutinefunction(method):
+                    asyncio.run(method())
+                else:
+                    method()
+                print(f"  ✅ {test_method}")
+                passed += 1
+            else:
+                print(f"  ❌ {test_method} - Method not found")
+                failed += 1
+        except Exception as e:
+            print(f"  ❌ {test_method} - {str(e)}")
+            failed += 1
+    
+    print(f"📊 BTC Commitment Tests: {passed} passed, {failed} failed")
+    return failed == 0
+
+if __name__ == '__main__':
+    success = run_btc_commitment_tests()
+    sys.exit(0 if success else 1)

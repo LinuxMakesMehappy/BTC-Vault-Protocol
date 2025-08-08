@@ -25,7 +25,14 @@ hex = "0.4.3"
 rand = { version = "0.8.5", features = ["getrandom"] }
 getrandom = { version = "0.2.15", features = ["js"] }
 
-# Note: curve25519-dalek vulnerability is in Solana's dependency tree
-# Cannot be patched without breaking Solana compatibility
-# Risk assessment: Timing attack requires local access and specific conditions
-# Acceptable risk for development/testing environment
+# Security notes:
+# - curve25519-dalek vulnerability (RUSTSEC-2024-0344) is in Solana's dependency tree
+#   Cannot be patched without breaking Solana compatibility
+#   Risk: Timing attack requires local access and specific conditions
+#   Mitigation: Acceptable risk for current development phase
+# - borsh vulnerability (RUSTSEC-2023-0033) is also in Solana's dependency tree
+#   Risk: ZST parsing issue with non-copy/clone types
+#   Mitigation: We don't use problematic ZST patterns
+# - Unmaintained dependencies (derivative, paste) are transitive dependencies
+#   Risk: No security patches for these crates
+#   Mitigation: Monitor for alternatives and Solana updates

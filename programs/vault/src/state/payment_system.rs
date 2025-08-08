@@ -149,7 +149,8 @@ impl PaymentSystem {
             return Err(VaultError::PaymentQueueFull.into());
         }
 
-        let payment_id = self.last_payment_id.checked_add(1).unwrap();
+        let payment_id = self.last_payment_id.checked_add(1)
+            .ok_or(VaultError::ArithmeticOverflow)?;
         let clock = Clock::get()?;
 
         let payment_request = PaymentRequest {
@@ -174,7 +175,7 @@ impl PaymentSystem {
         self.payment_requests.push(payment_request);
         self.last_payment_id = payment_id;
 
-        msg!(\"Payment request {} created for user {} (method: {:?}, amount: {})\",
+        msg!("Payment request {} created for user {} (method: {:?}, amount: {})",
              payment_id, user, method, amount);
 
         Ok(payment_id)
@@ -228,18 +229,18 @@ impl PaymentSystem {
             match payment.method {
                 PaymentMethod::Lightning => {
                     self.total_lightning_volume = self.total_lightning_volume
-                        .checked_add(payment.amount).unwrap();
+                        .checked_add(payment.amount).ok_or(VaultError::ArithmeticOverflow)?;
                 },
                 PaymentMethod::USDC => {
                     self.total_usdc_volume = self.total_usdc_volume
-                        .checked_add(payment.amount).unwrap();
+                        .checked_add(payment.amount).ok_or(VaultError::ArithmeticOverflow)?;
                 },
             }
             
             self.total_payments_processed = self.total_payments_processed
-                .checked_add(1).unwrap();
+                .checked_add(1).ok_or(VaultError::ArithmeticOverflow)?;
 
-            msg!(\"Payment {} completed successfully\", payment_id);
+            msg!("Payment {} completed successfully", payment_id);
         } else {
             payment.retry_count = payment.retry_count.checked_add(1).unwrap();
             payment.failure_reason = failure_reason;
@@ -248,10 +249,10 @@ impl PaymentSystem {
                 payment.status = PaymentStatus::Failed;
                 self.failed_payments_count = self.failed_payments_count
                     .checked_add(1).unwrap();
-                msg!(\"Payment {} failed after {} attempts\", payment_id, payment.retry_count);
+                msg!("Payment {} failed after {} attempts", payment_id, payment.retry_count);
             } else {
                 payment.status = PaymentStatus::Pending;
-                msg!(\"Payment {} failed, retry {} of {}\", payment_id, payment.retry_count, Self::MAX_RETRY_ATTEMPTS);
+                msg!("Payment {} failed, retry {} of {}", payment_id, payment.retry_count, Self::MAX_RETRY_ATTEMPTS);
             }
         }
 
@@ -276,7 +277,7 @@ impl PaymentSystem {
         }
 
         payment.status = PaymentStatus::Cancelled;
-        msg!(\"Payment {} cancelled by user {}\", payment_id, user);
+        msg!("Payment {} cancelled by user {}", payment_id, user);
 
         Ok(())
     }
@@ -296,21 +297,21 @@ impl PaymentSystem {
     /// Emergency pause/unpause payment system
     pub fn set_emergency_pause(&mut self, paused: bool) -> Result<()> {
         self.emergency_pause = paused;
-        msg!(\"Payment system emergency pause: {}\", paused);
+        msg!("Payment system emergency pause: {}", paused);
         Ok(())
     }
 
     /// Update Lightning configuration
     pub fn update_lightning_config(&mut self, config: LightningConfig) -> Result<()> {
         self.lightning_config = config;
-        msg!(\"Lightning configuration updated\");
+        msg!("Lightning configuration updated");
         Ok(())
     }
 
     /// Update USDC configuration
     pub fn update_usdc_config(&mut self, config: UsdcConfig) -> Result<()> {
         self.usdc_config = config;
-        msg!(\"USDC configuration updated\");
+        msg!("USDC configuration updated");
         Ok(())
     }
 
@@ -342,7 +343,7 @@ impl PaymentSystem {
         match method {
             PaymentMethod::Lightning => {
                 // Validate Lightning invoice format
-                if !destination.starts_with(\"lnbc\") && !destination.starts_with(\"lntb\") {
+                if !destination.starts_with("lnbc") && !destination.starts_with("lntb") {
                     return Err(VaultError::InvalidLightningInvoice.into());
                 }
                 if destination.len() < 50 || destination.len() > 2000 {
@@ -390,11 +391,11 @@ impl PaymentSystem {
     fn process_lightning_payment(&self, payment: &PaymentRequest) -> Result<()> {
         // In production, this would integrate with Lightning Network node
         // For now, we simulate the payment process
-        msg!(\"Processing Lightning payment: {} sats to {}\", 
+        msg!("Processing Lightning payment: {} sats to {}", 
              payment.amount, payment.destination);
         
         // Validate Lightning invoice
-        if !payment.destination.starts_with(\"lnbc\") && !payment.destination.starts_with(\"lntb\") {
+        if !payment.destination.starts_with("lnbc") && !payment.destination.starts_with("lntb") {
             return Err(VaultError::InvalidLightningInvoice.into());
         }
 
@@ -414,7 +415,7 @@ impl PaymentSystem {
 
     fn process_usdc_payment(&self, payment: &PaymentRequest) -> Result<()> {
         // In production, this would execute USDC transfer
-        msg!(\"Processing USDC payment: {} USDC to {}\", 
+        msg!("Processing USDC payment: {} USDC to {}", 
              payment.amount, payment.destination);
         
         // Validate recipient address

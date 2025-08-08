@@ -177,6 +177,37 @@ make verify-backups
 
 ## DOCUMENTATION STRUCTURE
 
+### User Documentation
+- **[User Guides](docs/USER_GUIDES.md)** - Complete user walkthrough including:
+  - BTC commitment process and ECDSA proof generation
+  - Reward claiming with BTC/USDC payment options
+  - Security setup (2FA, passkeys, session management)
+  - KYC verification process and compliance tiers
+  - Wallet integration (BlueWallet, Ledger hardware wallets)
+  - Multi-language support (English, Spanish, Chinese, Japanese)
+
+### Developer Documentation
+- **[API Documentation](docs/API_DOCUMENTATION.md)** - Complete API reference including:
+  - All program instructions with parameters and return values
+  - BTC commitment, staking, reward, and payment APIs
+  - Multisig, KYC, authentication, and treasury instructions
+  - Error codes, rate limits, and API versioning
+  - Security monitoring and oracle integration APIs
+
+- **[Developer Guide](docs/DEVELOPER_DOCUMENTATION.md)** - Development setup including:
+  - Configuration management (Chainlink, validators, treasury, dashboard)
+  - Deployment procedures for devnet, testnet, and mainnet
+  - Testing framework with unit, integration, and security tests
+  - Performance optimization for low-resource systems
+  - Database migration and verification scripts
+
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)** - Issue resolution including:
+  - Common problems and step-by-step solutions
+  - BTC commitment, oracle, staking, and payment issues
+  - Security, KYC, frontend, and performance problems
+  - Emergency procedures and incident response
+  - Contact information and escalation procedures
+
 ### Technical Documentation
 - `docs/SECURITY.md` - Security protocols and procedures
 - `docs/TESTING.md` - Testing strategies and procedures

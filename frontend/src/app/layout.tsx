@@ -5,6 +5,7 @@ import { VaultWalletProvider } from '@/components/WalletProvider';
 import { I18nProvider } from '@/components/I18nProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 import { Navigation } from '@/components/Navigation';
+import PerformanceDashboard from '@/components/PerformanceDashboard';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jetbrainsMono = JetBrains_Mono({
@@ -57,6 +58,7 @@ export default function RootLayout({
                   </div>
                 </footer>
               </div>
+              <PerformanceDashboard />
             </ToastProvider>
           </VaultWalletProvider>
         </I18nProvider>

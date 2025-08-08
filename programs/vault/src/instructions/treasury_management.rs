@@ -154,7 +154,7 @@ pub struct CreateTreasuryProposal<'info> {
 pub struct VoteOnTreasuryProposal<'info> {
     #[account(
         mut,
-        seeds = [b"treasury_proposal\", treasury_proposal.proposal_id.to_le_bytes().as_ref()],
+        seeds = [b"treasury_proposal", treasury_proposal.proposal_id.to_le_bytes().as_ref()],
         bump = treasury_proposal.bump
     )]
     pub treasury_proposal: Account<'info, TreasuryProposal>,
@@ -224,7 +224,7 @@ impl<'info> InitializeTreasuryVault<'info> {
             bump,
         )?;
         
-        msg!(\"Advanced treasury vault initialized with authority: {}\", ctx.accounts.authority.key());
+        msg!("Advanced treasury vault initialized with authority: {}", ctx.accounts.authority.key());
         
         Ok(())
     }
@@ -299,7 +299,7 @@ impl<'info> AddYieldStrategy<'info> {
             .ok_or(VaultError::MathOverflow)?;
         
         msg!(
-            \"Added yield strategy: {} on protocol: {} with expected APY: {}%\",
+            "Added yield strategy: {} on protocol: {} with expected APY: {}%",
             name,
             protocol,
             expected_apy as f64 / 100.0
@@ -350,7 +350,7 @@ impl<'info> AddLiquidityPool<'info> {
         treasury_vault.add_liquidity_pool(pool_info)?;
         
         msg!(
-            \"Added liquidity pool on {}: {} - {} with {} USD liquidity\",
+            "Added liquidity pool on {}: {} - {} with {} USD liquidity",
             dex_protocol,
             ctx.accounts.token_a_mint.key(),
             ctx.accounts.token_b_mint.key(),
@@ -402,7 +402,7 @@ impl<'info> ExecuteAdvancedRebalancing<'info> {
         };
         
         let seeds = &[
-            b\"treasury_vault\",
+            b"treasury_vault",
             treasury_vault.authority.as_ref(),
             &[treasury_vault.bump],
         ];
@@ -431,7 +431,7 @@ impl<'info> ExecuteAdvancedRebalancing<'info> {
         treasury_vault.updated_at = Clock::get()?.unix_timestamp;
         
         msg!(
-            \"Advanced rebalancing executed: {} tokens transferred\",
+            "Advanced rebalancing executed: {} tokens transferred",
             amount
         );
         
@@ -449,7 +449,7 @@ impl<'info> UpdateTreasuryPerformance<'info> {
         treasury_vault.update_performance_metrics(new_metrics)?;
         
         msg!(
-            \"Performance metrics updated for treasury vault: {}\",
+            "Performance metrics updated for treasury vault: {}",
             treasury_vault.key()
         );
         
@@ -501,7 +501,7 @@ impl<'info> CreateTreasuryProposal<'info> {
         treasury_proposal.bump = bump;
         
         msg!(
-            \"Treasury proposal created: {} - {} by {}\",
+            "Treasury proposal created: {} - {} by {}",
             proposal_id,
             title,
             ctx.accounts.proposer.key()
@@ -565,9 +565,9 @@ impl<'info> VoteOnTreasuryProposal<'info> {
         }
         
         msg!(
-            \"Vote recorded for proposal {}: {} with power {}\",
+            "Vote recorded for proposal {}: {} with power {}",
             treasury_proposal.proposal_id,
-            if vote_for { \"FOR\" } else { \"AGAINST\" },
+            if vote_for { "FOR" } else { "AGAINST" },
             voting_power
         );
         
@@ -590,7 +590,7 @@ impl<'info> EmergencyPauseTreasury<'info> {
         treasury_vault.updated_at = Clock::get()?.unix_timestamp;
         
         msg!(
-            \"Emergency pause activated for treasury vault: {}\",
+            "Emergency pause activated for treasury vault: {}",
             treasury_vault.key()
         );
         
@@ -629,7 +629,7 @@ impl<'info> UpdateRiskParameters<'info> {
         treasury_vault.updated_at = Clock::get()?.unix_timestamp;
         
         msg!(
-            \"Risk parameters updated for treasury vault: {}\",
+            "Risk parameters updated for treasury vault: {}",
             treasury_vault.key()
         );
         

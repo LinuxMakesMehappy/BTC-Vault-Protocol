@@ -1,15 +1,45 @@
 """
-Comprehensive tests for reward calculation and distribution system.
-Tests 1:2 ratio calculations, 50% profit sharing, state channels, and payment processing.
+Comprehensive Reward System Testing Suite
+Tests for reward calculation and distribution system with concurrent execution
+Tests 1:2 ratio calculations, 50% profit sharing, state channels, and payment processing
+Addresses FR7: Testing and Development Infrastructure requirements
 """
 
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import json
 import hashlib
+import threading
+from typing import List, Dict, Any
+import sys
+import os
+
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import configuration
+try:
+    from config.treasury import get_reward_config
+    from config.dashboard import get_payment_config
+except ImportError:
+    # Mock configs if not available
+    def get_reward_config():
+        return {
+            'user_share': 5000,  # 50%
+            'protocol_share': 5000,  # 50%
+            'ratio': 200  # 1:2 ratio (200%)
+        }
+    
+    def get_payment_config():
+        return {
+            'default_currency': 'BTC',
+            'supported_currencies': ['BTC', 'USDC'],
+            'lightning_enabled': True,
+            'auto_reinvest_enabled': True
+        }
 
 class MockRewardSystem:
     """Mock reward system for testing reward calculations and distributions"""

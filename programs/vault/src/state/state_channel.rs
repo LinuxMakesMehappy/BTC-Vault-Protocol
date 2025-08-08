@@ -267,7 +267,7 @@ impl StateChannel {
 
     /// Get channel status for monitoring
     pub fn get_status(&self) -> ChannelStatus {
-        let clock = Clock::get().unwrap();
+        let clock = Clock::get().map_err(|_| VaultError::ClockUnavailable)?;
         
         if !self.is_active {
             ChannelStatus::Closed

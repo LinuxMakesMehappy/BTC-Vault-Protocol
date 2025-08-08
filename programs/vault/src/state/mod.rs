@@ -10,6 +10,7 @@ pub mod kyc_compliance;
 pub mod authentication;
 pub mod treasury;
 pub mod treasury_management;
+pub mod security_monitoring;
 
 pub use btc_commitment::*;
 pub use oracle::*;
@@ -23,3 +24,4 @@ pub use kyc_compliance::*;
 pub use authentication::*;
 pub use treasury::*;
 pub use treasury_management::*;
+pub use security_monitoring::*;
