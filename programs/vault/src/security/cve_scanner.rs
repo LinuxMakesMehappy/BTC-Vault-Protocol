@@ -363,13 +363,13 @@ impl CveScanner {
     fn version_in_range(&self, version: &str, range: &VersionRange) -> Result<bool> {
         // Simplified version comparison - in production would use semver crate
         if let Some(min) = &range.min_version {
-            if version < min {
+            if version < min.as_str() {
                 return Ok(false);
             }
         }
         
         if let Some(max) = &range.max_version {
-            if version > max {
+            if version > max.as_str() {
                 return Ok(false);
             }
         }

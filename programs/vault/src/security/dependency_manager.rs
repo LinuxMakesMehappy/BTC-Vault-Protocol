@@ -264,7 +264,7 @@ impl DependencyManager {
                 if alternatives.is_empty() {
                     DependencyRecommendation::Reject(format!(
                         "Vulnerabilities found and no alternatives available: {}", 
-                        vulnerabilities.iter().map(|v| &v.id).collect::<Vec<_>>().join(", ")
+                        vulnerabilities.iter().map(|v| v.id.as_str()).collect::<Vec<_>>().join(", ")
                     ))
                 } else {
                     DependencyRecommendation::SuggestAlternative(alternatives.clone())
@@ -376,11 +376,12 @@ impl DependencyManager {
             }
         }
 
+        let total_vulnerabilities_fixed = security_improvements.len();
         let report = UpdateReport {
             updated_crates,
             rejected_updates,
             security_improvements,
-            total_vulnerabilities_fixed: security_improvements.len(),
+            total_vulnerabilities_fixed,
         };
 
         self.log_update_report(&report)?;
