@@ -494,7 +494,7 @@ impl<'info> BatchProcessOperations<'info> {
 
 // Helper functions
 fn is_multisig_signer(multisig_wallet: &MultisigWallet, signer: &Pubkey) -> bool {
-    multisig_wallet.owners.contains(signer)
+    multisig_wallet.signers.iter().any(|s| s.pubkey == *signer && s.is_active)
 }
 
 /// High-frequency trading engine for state channels

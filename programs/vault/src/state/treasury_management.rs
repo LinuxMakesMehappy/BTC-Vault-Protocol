@@ -482,9 +482,9 @@ impl TreasuryVault {
     }
     
     /// Check if rebalancing is needed
-    pub fn needs_rebalancing(&self) -> bool {
+    pub fn needs_rebalancing(&self) -> Result<bool> {
         if !self.rebalancing_config.auto_rebalancing_enabled {
-            return false;
+            return Ok(false);
         }
         
         let current_time = Clock::get().map_err(|_| VaultError::ClockUnavailable)?.unix_timestamp;
@@ -492,11 +492,11 @@ impl TreasuryVault {
         
         // Check time-based rebalancing
         if time_since_last >= self.rebalancing_config.rebalancing_frequency as i64 {
-            return true;
+            return Ok(true);
         }
         
         // Check performance-based rebalancing triggers
-        self.check_performance_triggers()
+        Ok(self.check_performance_triggers())
     }
     
     /// Update performance metrics

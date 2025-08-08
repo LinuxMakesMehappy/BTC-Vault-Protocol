@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use crate::errors::VaultError;
 
 #[account]
+#[derive(Debug)]
 pub struct Treasury {
     pub total_assets: u64,           // Total treasury value in USD (micro-dollars)
     pub sol_balance: u64,            // SOL balance in lamports

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use crate::errors::VaultError;
 
 /// KYC compliance tiers with different limits and requirements
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, PartialOrd)]
 pub enum KYCTier {
     None,           // No KYC - limited to 1 BTC
     Basic,          // Basic KYC - up to 10 BTC

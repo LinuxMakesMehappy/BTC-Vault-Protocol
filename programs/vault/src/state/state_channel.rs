@@ -266,10 +266,10 @@ impl StateChannel {
     }
 
     /// Get channel status for monitoring
-    pub fn get_status(&self) -> ChannelStatus {
+    pub fn get_status(&self) -> Result<ChannelStatus> {
         let clock = Clock::get().map_err(|_| VaultError::ClockUnavailable)?;
         
-        if !self.is_active {
+        Ok(if !self.is_active {
             ChannelStatus::Closed
         } else if clock.unix_timestamp > self.timeout {
             ChannelStatus::Expired
@@ -277,7 +277,7 @@ impl StateChannel {
             ChannelStatus::Finalized
         } else {
             ChannelStatus::Active
-        }
+        })
     }
 }
 

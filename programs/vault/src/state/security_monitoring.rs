@@ -57,7 +57,7 @@ pub enum SecurityEventType {
     IPChange,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Copy)]
 pub enum SecurityLevel {
     Low,
     Medium,
@@ -65,7 +65,7 @@ pub enum SecurityLevel {
     Critical,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
 pub enum AlertStatus {
     Active,
     Investigating,

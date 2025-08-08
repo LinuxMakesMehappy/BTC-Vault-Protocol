@@ -380,7 +380,7 @@ fn process_usdc_payment(
     };
     
     let treasury_seeds = &[
-        b"treasury",
+        b"treasury".as_ref(),
         &[treasury.bump],
     ];
     let signer_seeds = &[&treasury_seeds[..]];

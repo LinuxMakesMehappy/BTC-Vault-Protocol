@@ -305,7 +305,7 @@ pub fn monitor_channel_health(state_channel: &StateChannel) -> ChannelHealthRepo
     let clock = Clock::get().unwrap();
     let current_time = clock.unix_timestamp;
     
-    let status = state_channel.get_status();
+    let status = state_channel.get_status()?;
     let time_since_update = current_time - state_channel.last_update;
     let time_until_timeout = state_channel.timeout - current_time;
     

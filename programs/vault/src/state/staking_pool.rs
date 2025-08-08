@@ -31,6 +31,7 @@ pub struct AssetAllocation {
 }
 
 #[account]
+#[derive(Debug)]
 pub struct StakingPool {
     pub total_staked: u64,
     pub total_treasury_value: u64,  // Total value of treasury assets in USD
@@ -59,6 +60,9 @@ pub struct StakingPool {
     pub last_rebalance: i64,
     pub rebalance_threshold: u32,  // Basis points
     pub auto_rebalance_enabled: bool,
+    
+    // Security monitoring
+    pub slashing_events: u32,
     
     // Metadata
     pub last_update: i64,

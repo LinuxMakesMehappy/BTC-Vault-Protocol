@@ -302,9 +302,6 @@ pub enum VaultError {
     #[msg("Event log full")]
     EventLogFull,
     
-    #[msg("Alert not found")]
-    AlertNotFound,
-    
     #[msg("Invalid security level")]
     InvalidSecurityLevel,
     

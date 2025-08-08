@@ -384,7 +384,7 @@ impl<'info> ExecuteAdvancedRebalancing<'info> {
         
         // Check if rebalancing is needed
         require!(
-            treasury_vault.needs_rebalancing(),
+            treasury_vault.needs_rebalancing()?,
             TreasuryError::InvalidRebalancingParameters
         );
         
@@ -639,5 +639,5 @@ impl<'info> UpdateRiskParameters<'info> {
 
 // Helper functions
 fn is_multisig_signer(multisig_wallet: &MultisigWallet, signer: &Pubkey) -> bool {
-    multisig_wallet.owners.contains(signer)
+    multisig_wallet.signers.iter().any(|s| s.pubkey == *signer && s.is_active)
 }
