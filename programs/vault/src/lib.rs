@@ -5,6 +5,7 @@ pub mod state;
 pub mod errors;
 pub mod crypto;
 pub mod monitoring;
+pub mod security;
 pub mod traits;
 
 use instructions::btc_commitment::*;

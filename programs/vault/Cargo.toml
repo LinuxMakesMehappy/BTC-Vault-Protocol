@@ -24,6 +24,17 @@ bs58 = "0.5.1"
 hex = "0.4.3"
 rand = { version = "0.8.5", features = ["getrandom"] }
 getrandom = { version = "0.2.15", features = ["js"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"
+
+[build-dependencies]
+walkdir = "2.4"
+regex = "1.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
 
 # Security notes:
 # - curve25519-dalek vulnerability (RUSTSEC-2024-0344) is in Solana's dependency tree
