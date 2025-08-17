@@ -12,6 +12,7 @@ pub mod treasury;
 pub mod treasury_management;
 pub mod security_monitoring;
 pub mod user_account;
+pub mod liquidity_engine;
 
 pub use btc_commitment::*;
 pub use oracle::*;
@@ -27,3 +28,4 @@ pub use treasury::*;
 pub use treasury_management::*;
 pub use security_monitoring::*;
 pub use user_account::*;
+pub use liquidity_engine::*;

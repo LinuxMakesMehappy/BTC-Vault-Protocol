@@ -20,6 +20,7 @@ use instructions::kyc::*;
 use instructions::authentication::*;
 use instructions::treasury_management::*;
 use instructions::security_monitoring::*;
+use instructions::liquidity_engine::*;
 use crate::traits::PaymentType;
 use crate::state::{StateChannelUpdate, SignerInfo, TransactionType, TransactionPriority, SignatureType, PaymentMethod, LightningConfig, UsdcConfig, ReinvestmentConfig};
 use crate::state::rewards::RewardCalculation;
@@ -761,5 +762,42 @@ pub mod vault {
         instructions::security_monitoring::update_security_config(
             ctx, retention_days, max_events_per_user, auto_block_enabled, notification_webhook
         )
+    }
+
+    // Liquidity Engine Instructions
+    pub fn initialize_liquidity_engine(ctx: Context<InitializeLiquidityEngine>) -> Result<()> {
+        instructions::liquidity_engine::InitializeLiquidityEngine::process(ctx)
+    }
+
+    pub fn swap_via_jupiter(
+        ctx: Context<SwapViaJupiter>,
+        amount_in: u64,
+        minimum_amount_out: u64,
+        jupiter_data: Vec<u8>,
+    ) -> Result<()> {
+        instructions::liquidity_engine::SwapViaJupiter::process(ctx, amount_in, minimum_amount_out, jupiter_data)
+    }
+
+    pub fn stake_to_jsol(
+        ctx: Context<StakeToJSOL>,
+        sol_amount: u64,
+    ) -> Result<()> {
+        instructions::liquidity_engine::StakeToJSOL::process(ctx, sol_amount)
+    }
+
+    pub fn instant_unstake_jsol(
+        ctx: Context<InstantUnstakeJSOL>,
+        jsol_amount: u64,
+    ) -> Result<()> {
+        instructions::liquidity_engine::InstantUnstakeJSOL::process(ctx, jsol_amount)
+    }
+
+    pub fn cross_chain_bridge(
+        ctx: Context<CrossChainBridge>,
+        amount: u64,
+        target_chain: u16,
+        recipient: [u8; 32],
+    ) -> Result<()> {
+        instructions::liquidity_engine::CrossChainBridge::process(ctx, amount, target_chain, recipient)
     }
 }
