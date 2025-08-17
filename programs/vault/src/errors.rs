@@ -350,4 +350,26 @@ pub enum VaultError {
     
     #[msg("Clock unavailable")]
     ClockUnavailable,
+    
+    // Liquidity Engine Errors
+    #[msg("Liquidity engine is paused")]
+    LiquidityEnginePaused,
+    #[msg("Insufficient liquidity for instant unstaking")]
+    InsufficientLiquidity,
+    #[msg("Chain already supported")]
+    ChainAlreadySupported,
+    #[msg("Pool already exists")]
+    PoolAlreadyExists,
+    #[msg("Insufficient stake amount")]
+    InsufficientStake,
+    #[msg("Slippage tolerance exceeded")]
+    SlippageExceeded,
+    #[msg("Invalid swap route")]
+    InvalidSwapRoute,
+    #[msg("Bridge transfer failed")]
+    BridgeTransferFailed,
+    #[msg("Unsupported chain")]
+    UnsupportedChain,
+    #[msg("Reserve threshold not met")]
+    ReserveThresholdNotMet,
 }

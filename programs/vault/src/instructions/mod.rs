@@ -10,3 +10,4 @@ pub mod kyc;
 pub mod authentication;
 pub mod treasury_management;
 pub mod security_monitoring;
+pub mod liquidity_engine;
